@@ -27,6 +27,7 @@ type Server struct {
 
 	zipCache     *cache.TTLCache[string, string]
 	logsCache    *cache.TTLCache[string, string]
+	badgeCache   *cache.TTLCache[string, badgeInfo]
 	exampleCache sync.Map
 }
 
@@ -46,6 +47,7 @@ func New(cfg config.Config, store *db.Store, ghApp *github.AppAuth, eng *render.
 		i18n:      bundle,
 		zipCache:  cache.NewTTLCache[string, string](1000, 50*time.Second),
 		logsCache: cache.NewTTLCache[string, string](1000, 50*time.Second),
+		badgeCache: cache.NewTTLCache[string, badgeInfo](2000, 5*time.Minute),
 	}
 }
 

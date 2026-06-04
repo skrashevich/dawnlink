@@ -200,6 +200,8 @@ func (r *Repository) parseOwner() {
 
 type WorkflowRun struct {
 	ID            int64      `json:"id"`
+	Status        string     `json:"status"`
+	Conclusion    string     `json:"conclusion"`
 	Event         string     `json:"event"`
 	WorkflowID    int64      `json:"workflow_id"`
 	CheckSuiteURL string     `json:"check_suite_url"`
@@ -324,8 +326,10 @@ func ListWorkflowRuns(owner, repo, workflow, branch, event, status string, token
 	params := url.Values{
 		"branch":   {branch},
 		"event":    {event},
-		"status":   {status},
 		"per_page": {strconv.Itoa(max)},
+	}
+	if status != "" {
+		params.Set("status", status)
 	}
 	resp, err := Get(path, token, params)
 	if err != nil {

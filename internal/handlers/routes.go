@@ -16,6 +16,7 @@ import (
 )
 
 var routePatterns = struct {
+	workflowBadge    *regexp.Regexp
 	workflowBranch   *regexp.Regexp
 	workflowArtifact *regexp.Regexp
 	runDash          *regexp.Regexp
@@ -23,6 +24,7 @@ var routePatterns = struct {
 	artifact         *regexp.Regexp
 	job              *regexp.Regexp
 }{
+	workflowBadge:    regexp.MustCompile(`^/([^/]+)/([^/]+)/workflows/([^/]+)/([^/]+)/badge\.svg$`),
 	workflowBranch:   regexp.MustCompile(`^/([^/]+)/([^/]+)/workflows/([^/]+)/([^/]+)$`),
 	workflowArtifact: regexp.MustCompile(`^/([^/]+)/([^/]+)/workflows/([^/]+)/([^/]+)/([^/]+?)(\.zip)?$`),
 	runDash:          regexp.MustCompile(`^/([^/]+)/([^/]+)/actions/runs/([0-9]+)$`),
@@ -33,6 +35,9 @@ var routePatterns = struct {
 
 func (s *Server) serveArtifactRoutes(w http.ResponseWriter, r *http.Request) error {
 	path := r.URL.EscapedPath()
+	if m := routeMatch(routePatterns.workflowBadge, path); m != nil {
+		return s.badgeByBranch(w, r, m[1], m[2], m[3], m[4])
+	}
 	if m := routeMatch(routePatterns.workflowBranch, path); m != nil {
 		return s.dashByBranch(w, r, m[1], m[2], m[3], m[4])
 	}
@@ -96,6 +101,8 @@ func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, messages []
 		"Messages":        messages,
 		"ExampleWorkflow": example.workflowURL,
 		"ExampleDest":     s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", example.owner, example.repo, example.workflow, example.branch, example.artifact)),
+		"ExampleBadge":    s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/badge.svg", example.owner, example.repo, example.workflow, example.branch)),
+		"ExampleBadgeMD":  fmt.Sprintf("[![build](%s)](%s)", s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/badge.svg", example.owner, example.repo, example.workflow, example.branch)), s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s", example.owner, example.repo, example.workflow, example.branch))),
 		"ExampleArtifact": example.artifact,
 		"ReconfigureURL":  fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
 		"AuthURL":         s.oauthURL(r),

@@ -79,6 +79,7 @@ openssl rand -hex 32
 
 | Purpose | URL |
 |---------|-----|
+| Build status badge (SVG) | `/owner/repo/workflows/ci/main/badge.svg` |
 | Latest successful artifact | `/quassel/quassel/workflows/main/master/Windows` |
 | Any completed run | `?status=completed` |
 | Run artifact list | `/owner/repo/actions/runs/12345678` |
@@ -86,6 +87,19 @@ openssl rand -hex 32
 | Job logs | `/owner/repo/runs/{job_id}.txt` |
 
 Workflow names without an extension automatically receive the `.yml` extension. The `status` parameter accepts only `success` and `completed`. Private links contain the `h` secret; the service marks these pages as `noindex` and does not send a referrer to external sites.
+
+### README badge
+
+Show the latest GitHub Actions run status and link to the dawnl.ink artifact page:
+
+```markdown
+[![build](https://dawnl.ink/owner/repo/workflows/ci/main/badge.svg)](https://dawnl.ink/owner/repo/workflows/ci/main)
+```
+
+Optional query parameters on the badge URL:
+
+- `label` — left side of the badge (default: `build`)
+- `h` — private repository secret (same as artifact URLs)
 
 ## Docker
 

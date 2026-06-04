@@ -33,6 +33,15 @@
   </p>
   <div class="help-sections">
     <details class="help-details" open>
+      <summary>{{tr .Tr "section_badge"}}</summary>
+      <div class="details-body">
+        <p>{{tr .Tr "section_badge_desc"}}</p>
+        <p>{{tr .Tr "section_badge_md"}}</p>
+        <pre class="example-code"><code>{{index .Extra "ExampleBadgeMD"}}</code></pre>
+        <p class="muted"><a href="{{index .Extra "ExampleBadge"}}">{{index .Extra "ExampleBadge"}}</a></p>
+      </div>
+    </details>
+    <details class="help-details">
       <summary>{{tr .Tr "section_latest"}}</summary>
       <div class="details-body">
         <p>{{tr .Tr "section_latest_desc"}}</p>
