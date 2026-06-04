@@ -57,13 +57,25 @@
     const search = document.getElementById("repo-search");
     const stats = document.getElementById("repo-stats");
     const noMatch = document.getElementById("dashboard-no-match");
+    if (!search || !stats) {
+      return;
+    }
     const accounts = document.querySelectorAll(".dashboard-account");
     const total = Number(stats.dataset.total) || 0;
-    const tplAll = stats.dataset.template;
-    const tplFiltered = stats.dataset.filtered;
+    const tplAll = stats.dataset.template || "";
+    const tplFiltered = stats.dataset.filtered || "";
 
     function format(tpl, n) {
       return tpl.replace("%d", String(n));
+    }
+
+    function repoName(li) {
+      const fromData = li.getAttribute("data-repo");
+      if (fromData) {
+        return fromData.toLowerCase();
+      }
+      const link = li.querySelector("a");
+      return (link ? link.textContent : "").trim().toLowerCase();
     }
 
     function updateStats(visible) {
@@ -79,21 +91,28 @@
       let visible = 0;
       accounts.forEach(function (acc) {
         let accVisible = 0;
+        const owner = (acc.querySelector(".dashboard-account-name")?.textContent || "").trim().toLowerCase();
         acc.querySelectorAll(".dashboard-repo").forEach(function (li) {
-          const name = li.dataset.repo || "";
-          const match = !q || name.includes(q);
-          li.hidden = !match;
-          if (match) accVisible++;
+          const name = repoName(li);
+          const haystack = owner ? owner + "/" + name : name;
+          const match = !q || name.includes(q) || haystack.includes(q);
+          li.classList.toggle("is-filter-hidden", !match);
+          if (match) {
+            accVisible++;
+          }
         });
-        acc.hidden = accVisible === 0;
+        acc.classList.toggle("is-filter-hidden", accVisible === 0);
         visible += accVisible;
       });
-      noMatch.hidden = visible > 0 || accounts.length === 0;
+      if (noMatch) {
+        noMatch.hidden = visible > 0 || accounts.length === 0;
+      }
       updateStats(visible);
     }
 
     updateStats(total);
     search.addEventListener("input", filter);
+    search.addEventListener("search", filter);
   })();
   </script>
   {{else}}

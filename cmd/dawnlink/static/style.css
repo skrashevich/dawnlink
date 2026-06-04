@@ -781,6 +781,11 @@ main:has(.dashboard) {
   font-size: 0.75rem;
 }
 
+.dashboard-account.is-filter-hidden,
+.dashboard-repo.is-filter-hidden {
+  display: none !important;
+}
+
 .dashboard-repo a {
   color: var(--link);
   text-decoration: none;
