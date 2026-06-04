@@ -1,0 +1,23 @@
+{{define "repo_workflows.html"}}{{template "layout.html" .}}{{end}}
+
+{{define "repo_workflows_body"}}
+<section class="page-hero">
+  <p class="muted"><a href="{{index .Extra "DashboardURL"}}">← {{tr .Tr "repo_workflows_back"}}</a></p>
+  <h1>{{index .Extra "Owner"}}/{{index .Extra "Repo"}}</h1>
+  <h2>{{tr .Tr "repo_workflows_subtitle"}}</h2>
+  <p class="muted">{{tr .Tr "repo_workflows_branch"}} <code>{{index .Extra "Branch"}}</code> · <a href="{{index .Extra "GitHubURL"}}" rel="noopener noreferrer">GitHub</a></p>
+</section>
+<section class="link-group">
+  <h3>{{tr .Tr "repo_workflows_title"}}</h3>
+  {{$links := index .Extra "Links"}}
+  {{if $links}}
+  <ul class="artifact-links">
+    {{range $links}}
+    <li><a href="{{.URL}}">{{.Title}}</a></li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="muted">{{tr .Tr "repo_workflows_empty"}}</p>
+  {{end}}
+</section>
+{{end}}

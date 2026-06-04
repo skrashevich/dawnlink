@@ -152,11 +152,12 @@ type Account struct {
 }
 
 type Repository struct {
-	FullName string `json:"full_name"`
-	Name     string `json:"name"`
-	Owner    string
-	Private  bool `json:"private"`
-	Fork     bool `json:"fork"`
+	FullName       string `json:"full_name"`
+	Name           string `json:"name"`
+	Owner          string
+	DefaultBranch  string `json:"default_branch"`
+	Private        bool   `json:"private"`
+	Fork           bool   `json:"fork"`
 }
 
 func (r *Repository) UnmarshalJSON(data []byte) error {
@@ -252,6 +253,17 @@ type repositoriesResponse struct {
 	Repositories []Repository `json:"repositories"`
 }
 
+type Workflow struct {
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Path  string `json:"path"`
+	State string `json:"state"`
+}
+
+type workflowListResponse struct {
+	Workflows []Workflow `json:"workflows"`
+}
+
 type workflowRunsResponse struct {
 	WorkflowRuns []WorkflowRun `json:"workflow_runs"`
 }
@@ -319,6 +331,41 @@ func ListInstallationRepos(token Token, installationID int64, userScoped bool) (
 		}
 	}
 	return all, nil
+}
+
+func GetRepository(owner, repo string, token Token) (*Repository, error) {
+	path := fmt.Sprintf("repos/%s/%s", strings.ToLower(owner), strings.ToLower(repo))
+	resp, err := Get(path, token, nil)
+	if err != nil {
+		return nil, err
+	}
+	var out Repository
+	if err := decodeJSON(resp, &out); err != nil {
+		return nil, err
+	}
+	out.parseOwner()
+	return &out, nil
+}
+
+func ListWorkflows(owner, repo string, token Token) ([]Workflow, error) {
+	path := fmt.Sprintf("repos/%s/%s/actions/workflows", strings.ToLower(owner), strings.ToLower(repo))
+	var all []Workflow
+	params := url.Values{"per_page": {"100"}}
+	for {
+		resp, err := Get(path, token, params)
+		if err != nil {
+			return nil, err
+		}
+		var out workflowListResponse
+		if err := decodeJSON(resp, &out); err != nil {
+			return nil, err
+		}
+		all = append(all, out.Workflows...)
+		path, params = nextPage(resp)
+		if path == "" {
+			return all, nil
+		}
+	}
 }
 
 func ListWorkflowRuns(owner, repo, workflow, branch, event, status string, token Token, max int) ([]WorkflowRun, error) {

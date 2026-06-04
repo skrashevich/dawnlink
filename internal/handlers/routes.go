@@ -16,6 +16,7 @@ import (
 )
 
 var routePatterns = struct {
+	repoRoot         *regexp.Regexp
 	workflowBadge    *regexp.Regexp
 	workflowBranch   *regexp.Regexp
 	workflowArtifact *regexp.Regexp
@@ -24,6 +25,7 @@ var routePatterns = struct {
 	artifact         *regexp.Regexp
 	job              *regexp.Regexp
 }{
+	repoRoot:         regexp.MustCompile(`^/([^/]+)/([^/]+)$`),
 	workflowBadge:    regexp.MustCompile(`^/([^/]+)/([^/]+)/workflows/([^/]+)/([^/]+)/badge\.svg$`),
 	workflowBranch:   regexp.MustCompile(`^/([^/]+)/([^/]+)/workflows/([^/]+)/([^/]+)$`),
 	workflowArtifact: regexp.MustCompile(`^/([^/]+)/([^/]+)/workflows/([^/]+)/([^/]+)/([^/]+?)(\.zip)?$`),
@@ -35,6 +37,9 @@ var routePatterns = struct {
 
 func (s *Server) serveArtifactRoutes(w http.ResponseWriter, r *http.Request) error {
 	path := r.URL.EscapedPath()
+	if m := routeMatch(routePatterns.repoRoot, path); m != nil {
+		return s.repoWorkflows(w, r, m[1], m[2])
+	}
 	if m := routeMatch(routePatterns.workflowBadge, path); m != nil {
 		return s.badgeByBranch(w, r, m[1], m[2], m[3], m[4])
 	}
@@ -160,10 +165,18 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 				errOnce.Do(func() { firstErr = err })
 				return
 			}
-			acc := dashboardAccount{
-				Owner:        ri.RepoOwner,
-				PublicRepos:  ri.PublicRepos.Sorted(),
-				PrivateRepos: ri.PrivateRepos.Sorted(),
+			acc := dashboardAccount{Owner: ri.RepoOwner}
+			for _, name := range ri.PublicRepos.Sorted() {
+				acc.PublicRepos = append(acc.PublicRepos, dashboardRepo{
+					Name: name,
+					URL:  s.dashboardRepoURL(r, ri.RepoOwner, name, false, ""),
+				})
+			}
+			for _, name := range ri.PrivateRepos.Sorted() {
+				acc.PrivateRepos = append(acc.PrivateRepos, dashboardRepo{
+					Name: name,
+					URL:  s.dashboardRepoURL(r, ri.RepoOwner, name, true, s.store.Password(ri, name)),
+				})
 			}
 			mu.Lock()
 			accounts = append(accounts, acc)
@@ -196,8 +209,13 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 
 type dashboardAccount struct {
 	Owner        string
-	PublicRepos  []string
-	PrivateRepos []string
+	PublicRepos  []dashboardRepo
+	PrivateRepos []dashboardRepo
+}
+
+type dashboardRepo struct {
+	Name string
+	URL  string
 }
 
 func (s *Server) setup(w http.ResponseWriter, r *http.Request) error {

@@ -34,14 +34,14 @@
       </summary>
       <ul class="dashboard-repos" aria-label="{{$acc.Owner}}">
         {{range $acc.PublicRepos}}
-        <li class="dashboard-repo" data-repo="{{lower .}}">
-          <a href="https://github.com/{{$acc.Owner}}/{{.}}">{{.}}</a>
+        <li class="dashboard-repo" data-repo="{{lower .Name}}">
+          <a href="{{.URL}}">{{.Name}}</a>
           <span class="repo-badge repo-badge--public">{{tr $.Tr "dashboard_public"}}</span>
         </li>
         {{end}}
         {{range $acc.PrivateRepos}}
-        <li class="dashboard-repo" data-repo="{{lower .}}">
-          <a href="https://github.com/{{$acc.Owner}}/{{.}}">{{.}}</a>
+        <li class="dashboard-repo" data-repo="{{lower .Name}}">
+          <a href="{{.URL}}">{{.Name}}</a>
           <span class="repo-badge repo-badge--private">{{tr $.Tr "dashboard_private"}}</span>
         </li>
         {{end}}

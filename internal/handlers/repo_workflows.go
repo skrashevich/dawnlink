@@ -1,0 +1,106 @@
+package handlers
+
+import (
+	"fmt"
+	"net/http"
+	"sort"
+	"strings"
+
+	"github.com/skrashevich/dawnlink/internal/github"
+	"github.com/skrashevich/dawnlink/internal/render"
+)
+
+type repoWorkflowLink struct {
+	Title string
+	URL   string
+	Path  string
+}
+
+func (s *Server) repoWorkflows(w http.ResponseWriter, r *http.Request, owner, repo string) error {
+	h := r.URL.Query().Get("h")
+	token, pw, err := s.store.VerifiedToken(owner, repo, h)
+	if err != nil {
+		return &httpError{status: 404, message: s.t(r, "repo_not_found_private")}
+	}
+	if pw != "" {
+		h = pw
+		w.Header().Set("X-Robots-Tag", "noindex")
+	}
+
+	repository, err := github.GetRepository(owner, repo, token)
+	if err != nil {
+		if github.IsNotFound(err) {
+			return &httpError{status: 404, message: s.t(r, "repo_not_found_private")}
+		}
+		return err
+	}
+	branch := repository.DefaultBranch
+	if branch == "" {
+		branch = "main"
+	}
+
+	workflows, err := github.ListWorkflows(owner, repo, token)
+	if err != nil {
+		if github.IsNotFound(err) {
+			return &httpError{status: 404, message: s.t(r, "repo_not_found_private")}
+		}
+		return err
+	}
+
+	var links []repoWorkflowLink
+	for _, wf := range workflows {
+		if wf.State != "" && wf.State != "active" {
+			continue
+		}
+		short := workflowShortName(wf.Path)
+		if short == "" {
+			continue
+		}
+		u := s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s", owner, repo, pathComponent(short), pathComponent(branch)))
+		u = artifactURL(u+"?preview", h, "")
+		title := short
+		if wf.Name != "" && !strings.EqualFold(wf.Name, short) {
+			title = fmt.Sprintf("%s (%s)", wf.Name, short)
+		}
+		links = append(links, repoWorkflowLink{
+			Title: title,
+			URL:   u,
+			Path:  wf.Path,
+		})
+	}
+	sort.Slice(links, func(i, j int) bool {
+		return strings.ToLower(links[i].Title) < strings.ToLower(links[j].Title)
+	})
+
+	canonical := artifactURL(s.abs(r, fmt.Sprintf("/%s/%s", owner, repo)), h, "")
+	return s.renderPage(w, r, "repo_workflows.html", render.PageData{
+		Title:     fmt.Sprintf("%s/%s", owner, repo),
+		Canonical: canonical,
+		PageBlock: "repo_workflows_body",
+		Extra: map[string]any{
+			"Owner":        owner,
+			"Repo":         repo,
+			"Branch":       branch,
+			"Links":        links,
+			"DashboardURL": s.abs(r, "/dashboard"),
+			"GitHubURL":    fmt.Sprintf("https://github.com/%s/%s", owner, repo),
+		},
+	})
+}
+
+func workflowShortName(path string) string {
+	base := path
+	if i := strings.LastIndex(path, "/"); i >= 0 {
+		base = path[i+1:]
+	}
+	base = strings.TrimSuffix(base, ".yml")
+	return strings.TrimSuffix(base, ".yaml")
+}
+
+func (s *Server) dashboardRepoURL(r *http.Request, owner, repo string, private bool, password string) string {
+	u := s.abs(r, fmt.Sprintf("/%s/%s", owner, repo))
+	if private && password != "" {
+		u = artifactURL(u, password, "")
+	}
+	return u
+}
