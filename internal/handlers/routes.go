@@ -103,14 +103,18 @@ func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, messages []
 		owner:       "skrashevich", repo: "dawnlink", workflow: "binaries", branch: "main", artifact: "dawnlink-linux-amd64",
 	}
 	extra := map[string]any{
-		"Messages":        messages,
-		"ExampleWorkflow": example.workflowURL,
-		"ExampleDest":     s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", example.owner, example.repo, example.workflow, example.branch, example.artifact)),
-		"ExampleArtifact": example.artifact,
-		"ReconfigureURL":  fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
-		"AuthURL":         s.oauthURL(r, "/dashboard"),
-		"HasAuth":         s.cfg.GitHubClientID != "" && s.cfg.GitHubClientSecret != "",
-		"HasMessages":     len(messages) > 0,
+		"Messages":         messages,
+		"ExampleWorkflow":  example.workflowURL,
+		"ExampleDest":      s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", example.owner, example.repo, example.workflow, example.branch, example.artifact)),
+		"ExampleArtifact":  example.artifact,
+		"ExampleBotWorkflow": fmt.Sprintf("https://github.com/%s/%s/blob/%s/.github/workflows/pr-comment.yml", example.owner, example.repo, example.branch),
+		"ReconfigureURL":   fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
+		"AuthURL":          s.oauthURL(r, "/dashboard"),
+		"HasAuth":          s.cfg.GitHubClientID != "" && s.cfg.GitHubClientSecret != "",
+		"HasMessages":      len(messages) > 0,
+	}
+	if ids, err := s.cachedIndexExampleIDs(example); err == nil {
+		applyIndexExampleExtras(example, ids, func(path string) string { return s.abs(r, path) }, extra)
 	}
 	return s.renderPage(w, r, "index.html", render.PageData{
 		Canonical: s.abs(r, "/"),

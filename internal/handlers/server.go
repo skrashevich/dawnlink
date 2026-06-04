@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/skrashevich/dawnlink/internal/cache"
@@ -25,10 +24,10 @@ type Server struct {
 	render *render.Engine
 	i18n   *i18n.Bundle
 
-	zipCache     *cache.TTLCache[string, string]
-	logsCache    *cache.TTLCache[string, string]
-	badgeCache   *cache.TTLCache[string, badgeInfo]
-	exampleCache sync.Map
+	zipCache          *cache.TTLCache[string, string]
+	logsCache         *cache.TTLCache[string, string]
+	badgeCache        *cache.TTLCache[string, badgeInfo]
+	indexExamplesCache *cache.TTLCache[string, indexExampleIDs]
 }
 
 type ArtifactLink struct {
@@ -45,9 +44,10 @@ func New(cfg config.Config, store *db.Store, ghApp *github.AppAuth, eng *render.
 		ghApp:      ghApp,
 		render:     eng,
 		i18n:       bundle,
-		zipCache:   cache.NewTTLCache[string, string](1000, 50*time.Second),
-		logsCache:  cache.NewTTLCache[string, string](1000, 50*time.Second),
-		badgeCache: cache.NewTTLCache[string, badgeInfo](2000, 5*time.Minute),
+		zipCache:           cache.NewTTLCache[string, string](1000, 50*time.Second),
+		logsCache:          cache.NewTTLCache[string, string](1000, 50*time.Second),
+		badgeCache:         cache.NewTTLCache[string, badgeInfo](2000, 5*time.Minute),
+		indexExamplesCache: cache.NewTTLCache[string, indexExampleIDs](8, 3*time.Hour),
 	}
 }
 

@@ -50,19 +50,54 @@
     <details class="help-details">
       <summary>{{tr .Tr "section_artifact"}}</summary>
       <div class="details-body">
-        <p>{{tr .Tr "section_artifact_desc"}}</p>
+        <p>{{tr .Tr "section_artifact_intro"}}</p>
+        {{if index .Extra "ExampleArtifactGitHub"}}
+        <div class="example-pair">
+          <a href="{{index .Extra "ExampleArtifactGitHub"}}">{{index .Extra "ExampleArtifactGitHub"}}</a>
+          <span class="example-arrow" aria-hidden="true">→</span>
+          <a href="{{index .Extra "ExampleArtifactDest"}}">{{index .Extra "ExampleArtifactDest"}}</a>
+        </div>
+        {{end}}
+        <p>{{tr .Tr "section_artifact_outro"}}</p>
+        <p>{{tr .Tr "section_artifact_paste"}}</p>
       </div>
     </details>
     <details class="help-details">
       <summary>{{tr .Tr "section_run"}}</summary>
       <div class="details-body">
-        <p>{{tr .Tr "section_run_desc"}}</p>
+        <p>{{tr .Tr "section_run_intro"}}</p>
+        {{if index .Extra "ExampleRunGitHub"}}
+        <p>{{tr .Tr "section_run_example"}}</p>
+        <div class="example-pair">
+          <a href="{{index .Extra "ExampleRunGitHub"}}">{{index .Extra "ExampleRunGitHub"}}</a>
+          <span class="example-arrow" aria-hidden="true">→</span>
+          <a href="{{index .Extra "ExampleRunDest"}}">{{index .Extra "ExampleRunDest"}}</a>
+        </div>
+        <p>{{tr .Tr "section_run_must"}}</p>
+        {{end}}
+        {{if index .Extra "ExampleJobGitHub"}}
+        <p>{{tr .Tr "section_run_job_intro"}}</p>
+        <div class="example-pair">
+          <a href="{{index .Extra "ExampleJobGitHub"}}">{{index .Extra "ExampleJobGitHub"}}</a>
+          <span class="example-arrow" aria-hidden="true">→</span>
+          <a href="{{index .Extra "ExampleJobDest"}}">{{index .Extra "ExampleJobDest"}}</a>
+        </div>
+        {{end}}
+        <p>{{tr .Tr "section_run_job_outro"}}</p>
       </div>
     </details>
     <details class="help-details">
       <summary>{{tr .Tr "section_bot"}}</summary>
       <div class="details-body">
-        <p>{{tr .Tr "section_bot_desc"}}</p>
+        <p>{{tr .Tr "section_bot_p1"}}</p>
+        <p>{{tr .Tr "section_bot_p2"}}</p>
+        <p>
+          {{tr .Tr "section_bot_p3"}}
+          <a href="{{index .Extra "ExampleBotWorkflow"}}">{{tr .Tr "section_bot_workflow"}}</a>.
+          {{tr .Tr "section_bot_p3_note"}}
+        </p>
+        <p>{{tr .Tr "section_bot_p4"}}</p>
+        <p class="muted">{{tr .Tr "section_bot_p5"}}</p>
       </div>
     </details>
   </div>

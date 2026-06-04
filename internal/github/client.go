@@ -272,6 +272,15 @@ type artifactsResponse struct {
 	Artifacts []Artifact `json:"artifacts"`
 }
 
+type WorkflowJob struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type workflowJobsResponse struct {
+	Jobs []WorkflowJob `json:"jobs"`
+}
+
 func ListUserInstallations(token UserToken) ([]Installation, error) {
 	path := "user/installations"
 	params := url.Values{"per_page": {"100"}}
@@ -409,6 +418,27 @@ func ListRunArtifacts(owner, repo string, runID int64, token Token) ([]Artifact,
 			return nil, err
 		}
 		all = append(all, out.Artifacts...)
+		path, params = nextPage(resp)
+		if path == "" {
+			return all, nil
+		}
+	}
+}
+
+func ListWorkflowRunJobs(owner, repo string, runID int64, token Token) ([]WorkflowJob, error) {
+	path := fmt.Sprintf("repos/%s/%s/actions/runs/%d/jobs", strings.ToLower(owner), strings.ToLower(repo), runID)
+	params := url.Values{"per_page": {"100"}}
+	var all []WorkflowJob
+	for {
+		resp, err := Get(path, token, params)
+		if err != nil {
+			return nil, err
+		}
+		var out workflowJobsResponse
+		if err := decodeJSON(resp, &out); err != nil {
+			return nil, err
+		}
+		all = append(all, out.Jobs...)
 		path, params = nextPage(resp)
 		if path == "" {
 			return all, nil

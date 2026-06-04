@@ -127,6 +127,23 @@ func TestListWorkflowRunsIncludesEventWhenSet(t *testing.T) {
 	}
 }
 
+func TestListWorkflowRunJobs(t *testing.T) {
+	withHTTPTransport(t, func(r *http.Request) *http.Response {
+		if !strings.Contains(r.URL.Path, "/actions/runs/42/jobs") {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		return jsonResponse(`{"jobs":[{"id":99,"name":"build"}]}`)
+	})
+
+	jobs, err := ListWorkflowRunJobs("owner", "repo", 42, AppToken{JWT: "jwt"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs) != 1 || jobs[0].ID != 99 {
+		t.Fatalf("jobs = %+v", jobs)
+	}
+}
+
 func TestNextLinkFindsNonFirstRelation(t *testing.T) {
 	resp := &http.Response{Header: http.Header{
 		"Link": {`<https://api.github.com/items?page=1>; rel="prev", <https://api.github.com/items?page=3>; rel="next"`},
