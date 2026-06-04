@@ -29,40 +29,40 @@ func TestValidate(t *testing.T) {
 }
 
 func TestParsePublicURLs(t *testing.T) {
-	urls := parsePublicURLs("https://dawnlink.svk.su/, https://dawnlink.svk.app/", "8080")
+	urls := parsePublicURLs("https://dawnl.ink/, https://dawnl.ink/", "8080")
 	if len(urls) != 2 {
 		t.Fatalf("len(urls) = %d, want 2", len(urls))
 	}
-	if urls[0] != "https://dawnlink.svk.su/" {
+	if urls[0] != "https://dawnl.ink/" {
 		t.Fatalf("primary URL = %q", urls[0])
 	}
-	if urls[1] != "https://dawnlink.svk.app/" {
+	if urls[1] != "https://dawnl.ink/" {
 		t.Fatalf("secondary URL = %q", urls[1])
 	}
 }
 
 func TestBaseURLForRequest(t *testing.T) {
 	cfg := Config{
-		BaseURL:    "https://dawnlink.svk.su/",
-		PublicURLs: []string{"https://dawnlink.svk.su/", "https://dawnlink.svk.app/"},
+		BaseURL:    "https://dawnl.ink/",
+		PublicURLs: []string{"https://dawnl.ink/", "https://dawnl.ink/"},
 	}
 
-	r := httptest.NewRequest("GET", "https://dawnlink.svk.app/owner/repo", nil)
-	r.Host = "dawnlink.svk.app"
-	if got := cfg.BaseURLForRequest(r); got != "https://dawnlink.svk.app/" {
-		t.Fatalf("BaseURLForRequest = %q, want https://dawnlink.svk.app/", got)
+	r := httptest.NewRequest("GET", "https://dawnl.ink/owner/repo", nil)
+	r.Host = "dawnl.ink"
+	if got := cfg.BaseURLForRequest(r); got != "https://dawnl.ink/" {
+		t.Fatalf("BaseURLForRequest = %q, want https://dawnl.ink/", got)
 	}
 
 	r = httptest.NewRequest("GET", "https://unknown.example/", nil)
 	r.Host = "unknown.example"
-	if got := cfg.BaseURLForRequest(r); got != "https://dawnlink.svk.su/" {
+	if got := cfg.BaseURLForRequest(r); got != "https://dawnl.ink/" {
 		t.Fatalf("unknown host fallback = %q, want primary URL", got)
 	}
 
-	r = httptest.NewRequest("GET", "https://dawnlink.svk.app/", nil)
-	r.Host = "dawnlink.svk.app"
-	r.Header.Set("X-Forwarded-Host", "dawnlink.svk.su")
-	if got := cfg.BaseURLForRequest(r); got != "https://dawnlink.svk.su/" {
-		t.Fatalf("forwarded host = %q, want https://dawnlink.svk.su/", got)
+	r = httptest.NewRequest("GET", "https://dawnl.ink/", nil)
+	r.Host = "dawnl.ink"
+	r.Header.Set("X-Forwarded-Host", "dawnl.ink")
+	if got := cfg.BaseURLForRequest(r); got != "https://dawnl.ink/" {
+		t.Fatalf("forwarded host = %q, want https://dawnl.ink/", got)
 	}
 }
