@@ -23,6 +23,11 @@ type Config struct {
 	PublicURLs             []string
 	DatabaseFile           string
 	DefaultLocale          string
+
+	DownloadAnalyticsCollect   bool
+	DownloadAnalyticsView      bool
+	DownloadAnalyticsSecret    string
+	DownloadAnalyticsRetention int
 }
 
 func Load() Config {
@@ -42,6 +47,10 @@ func Load() Config {
 	if locale == "" {
 		locale = "en"
 	}
+	retention, _ := strconv.Atoi(os.Getenv("DOWNLOAD_ANALYTICS_RETENTION_DAYS"))
+	if retention == 0 && envBool("DOWNLOAD_ANALYTICS_COLLECT") {
+		retention = 180
+	}
 	return Config{
 		GitHubAppName:          envOr("GITHUB_APP_NAME", "dawnl-ink"),
 		GitHubAppID:            appID,
@@ -55,6 +64,11 @@ func Load() Config {
 		PublicURLs:             publicURLs,
 		DatabaseFile:           db,
 		DefaultLocale:          locale,
+
+		DownloadAnalyticsCollect:   envBool("DOWNLOAD_ANALYTICS_COLLECT"),
+		DownloadAnalyticsView:      envBool("DOWNLOAD_ANALYTICS_VIEW"),
+		DownloadAnalyticsSecret:    os.Getenv("DOWNLOAD_ANALYTICS_SECRET"),
+		DownloadAnalyticsRetention: retention,
 	}
 }
 
@@ -71,6 +85,16 @@ func (c Config) Validate() error {
 	}
 	if (c.GitHubClientID == "") != (c.GitHubClientSecret == "") {
 		problems = append(problems, "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be configured together")
+	}
+	if c.DownloadAnalyticsView {
+		if c.DownloadAnalyticsSecret == "" {
+			problems = append(problems, "DOWNLOAD_ANALYTICS_SECRET is required when DOWNLOAD_ANALYTICS_VIEW is enabled")
+		} else if len(c.DownloadAnalyticsSecret) < 16 {
+			problems = append(problems, "DOWNLOAD_ANALYTICS_SECRET must be at least 16 characters when analytics UI is enabled")
+		}
+	}
+	if c.DownloadAnalyticsView && !c.DownloadAnalyticsCollect {
+		problems = append(problems, "DOWNLOAD_ANALYTICS_COLLECT must be enabled when DOWNLOAD_ANALYTICS_VIEW is enabled")
 	}
 	for i, raw := range c.PublicURLs {
 		base, err := url.Parse(raw)
@@ -89,6 +113,11 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func envBool(key string) bool {
+	v := strings.TrimSpace(strings.ToLower(os.Getenv(key)))
+	return v == "1" || v == "true" || v == "yes" || v == "on"
 }
 
 func parsePublicURLs(raw, port string) []string {

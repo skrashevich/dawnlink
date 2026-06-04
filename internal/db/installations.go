@@ -49,7 +49,10 @@ CREATE TABLE IF NOT EXISTS installations (
   private_repos TEXT NOT NULL,
   UNIQUE(repo_owner)
 )`)
-	return err
+	if err != nil {
+		return err
+	}
+	return s.initDownloads()
 }
 
 type RepoInstallation struct {

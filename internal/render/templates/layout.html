@@ -30,6 +30,7 @@
     {{if eq .PageBlock "artifact_list_body"}}{{template "artifact_list_body" .}}{{end}}
     {{if eq .PageBlock "artifact_body"}}{{template "artifact_body" .}}{{end}}
     {{if eq .PageBlock "error_body"}}{{template "error_body" .}}{{end}}
+    {{if eq .PageBlock "download_analytics_body"}}{{template "download_analytics_body" .}}{{end}}
   </main>
   <footer>
     <a href="https://github.com/skrashevich/dawnlink">{{tr .Tr "footer_source"}}</a>

@@ -45,6 +45,13 @@ func main() {
 		log.Fatal(err)
 	}
 	defer store.Close()
+	if cfg.DownloadAnalyticsCollect && cfg.DownloadAnalyticsRetention > 0 {
+		if n, err := store.PurgeDownloadEventsOlderThan(cfg.DownloadAnalyticsRetention); err != nil {
+			log.Printf("download analytics: purge: %v", err)
+		} else if n > 0 {
+			log.Printf("download analytics: purged %d old events", n)
+		}
+	}
 
 	srv := handlers.New(cfg, store, ghApp, eng, bundle)
 	mux := http.NewServeMux()

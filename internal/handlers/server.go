@@ -153,6 +153,9 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) error {
 	if path == "/setup" {
 		return s.setup(w, r)
 	}
+	if path == "/analytics/downloads" {
+		return s.downloadAnalytics(w, r)
+	}
 
 	return s.serveArtifactRoutes(w, r)
 }

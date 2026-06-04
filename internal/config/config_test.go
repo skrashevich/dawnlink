@@ -28,6 +28,52 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+func TestValidateDownloadAnalytics(t *testing.T) {
+	base := Config{
+		GitHubAppID:   1,
+		GitHubPEMPath: "key.pem",
+		AppSecret:     "01234567890123456789012345678901",
+		BaseURL:       "https://dawn.example/",
+		PublicURLs:    []string{"https://dawn.example/"},
+	}
+	if err := base.Validate(); err != nil {
+		t.Fatalf("default analytics off: %v", err)
+	}
+
+	viewOnly := base
+	viewOnly.DownloadAnalyticsView = true
+	viewOnly.DownloadAnalyticsSecret = "short"
+	if err := viewOnly.Validate(); err == nil {
+		t.Fatal("view without collect/secret accepted")
+	}
+
+	view := base
+	view.DownloadAnalyticsCollect = true
+	view.DownloadAnalyticsView = true
+	view.DownloadAnalyticsSecret = "0123456789012345"
+	if err := view.Validate(); err != nil {
+		t.Fatalf("valid analytics config: %v", err)
+	}
+
+	viewNoCollect := base
+	viewNoCollect.DownloadAnalyticsView = true
+	viewNoCollect.DownloadAnalyticsSecret = "01234567890123456789012345678901"
+	if err := viewNoCollect.Validate(); err == nil {
+		t.Fatal("view without collect accepted")
+	}
+}
+
+func TestEnvBool(t *testing.T) {
+	t.Setenv("TEST_BOOL_FLAG", "true")
+	if !envBool("TEST_BOOL_FLAG") {
+		t.Fatal("expected true")
+	}
+	t.Setenv("TEST_BOOL_FLAG", "off")
+	if envBool("TEST_BOOL_FLAG") {
+		t.Fatal("expected false")
+	}
+}
+
 func TestParsePublicURLs(t *testing.T) {
 	urls := parsePublicURLs("https://dawnl.ink/, https://dawnl.ink/", "8080")
 	if len(urls) != 2 {

@@ -17,7 +17,12 @@
         placeholder="{{tr .Tr "dashboard_search_placeholder"}}">
     </label>
     <p class="dashboard-stats" id="repo-stats" data-total="{{$total}}" data-template="{{tr .Tr "dashboard_stats"}}" data-filtered="{{tr .Tr "dashboard_stats_filtered"}}"></p>
-    <a class="btn-secondary" href="{{index .Extra "ReconfigureURL"}}">{{tr .Tr "reconfigure"}}</a>
+    <div class="dashboard-actions">
+      {{if index .Extra "AnalyticsURL"}}
+      <a class="btn-secondary" href="{{index .Extra "AnalyticsURL"}}">{{tr .Tr "dashboard_analytics"}}</a>
+      {{end}}
+      <a class="btn-secondary" href="{{index .Extra "ReconfigureURL"}}">{{tr .Tr "reconfigure"}}</a>
+    </div>
   </div>
 
   <div class="dashboard-accounts" id="dashboard-accounts">
@@ -119,6 +124,9 @@
   <div class="card dashboard-empty">
     <p>{{tr .Tr "no_installations"}}</p>
     <p class="actions-row">
+      {{if index .Extra "AnalyticsURL"}}
+      <a class="btn-secondary" href="{{index .Extra "AnalyticsURL"}}">{{tr .Tr "dashboard_analytics"}}</a>
+      {{end}}
       <a class="btn-secondary" href="{{index .Extra "ReconfigureURL"}}">{{tr .Tr "reconfigure"}}</a>
     </p>
   </div>

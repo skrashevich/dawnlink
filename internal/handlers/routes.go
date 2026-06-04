@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/skrashevich/dawnlink/internal/db"
 	"github.com/skrashevich/dawnlink/internal/github"
 	"github.com/skrashevich/dawnlink/internal/render"
 )
@@ -201,6 +202,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 			"Accounts":       accounts,
 			"TotalRepos":     totalRepos,
 			"ReconfigureURL": fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
+			"AnalyticsURL":   s.downloadAnalyticsURL(r),
 		},
 	})
 }
@@ -484,7 +486,21 @@ func (s *Server) byRunInternal(w http.ResponseWriter, r *http.Request, owner, re
 	if o != "" {
 		owner, repo = o, n
 	}
-	links, canonical, title, err := s.buildArtifactLinks(r, owner, repo, art.ID, checkSuiteID, h, zip)
+	meta := downloadAnalyticsMeta{
+		RouteKind:    db.RouteRun,
+		Owner:        owner,
+		Repo:         repo,
+		ArtifactName: artifact,
+		RunID:        runID,
+		StatusFilter: status,
+		RunEvent:     event,
+	}
+	if workflow != "" {
+		meta.RouteKind = db.RouteWorkflow
+		meta.Workflow = workflow
+		meta.Branch = branch
+	}
+	links, canonical, title, err := s.buildArtifactLinks(r, owner, repo, art.ID, checkSuiteID, h, zip, meta)
 	if err != nil {
 		return err
 	}
@@ -530,14 +546,15 @@ func (s *Server) byArtifact(w http.ResponseWriter, r *http.Request, owner, repo,
 		h = pw
 	}
 	checkSuite := int64(0)
-	links, canonical, title, err := s.buildArtifactLinks(r, owner, repo, artifactID, checkSuite, h, zip)
+	meta := downloadAnalyticsMeta{RouteKind: db.RouteArtifact}
+	links, canonical, title, err := s.buildArtifactLinks(r, owner, repo, artifactID, checkSuite, h, zip, meta)
 	if err != nil {
 		return err
 	}
 	return s.renderArtifactPage(w, r, title, canonical, links)
 }
 
-func (s *Server) buildArtifactLinks(r *http.Request, owner, repo string, artifactID, checkSuiteID int64, h string, zip bool) ([]ArtifactLink, string, []string, error) {
+func (s *Server) buildArtifactLinks(r *http.Request, owner, repo string, artifactID, checkSuiteID int64, h string, zip bool, meta downloadAnalyticsMeta) ([]ArtifactLink, string, []string, error) {
 	token, _, err := s.store.VerifiedToken(owner, repo, h)
 	if err != nil {
 		return nil, "", nil, &httpError{status: 404, message: err.Error()}
@@ -560,6 +577,17 @@ func (s *Server) buildArtifactLinks(r *http.Request, owner, repo string, artifac
 		return nil, "", nil, &httpError{status: 404, message: "zip only"}
 	}
 	if zip {
+		meta.Owner = owner
+		meta.Repo = repo
+		meta.ArtifactID = artifactID
+		if meta.RouteKind == "" {
+			meta.RouteKind = db.RouteArtifact
+		}
+		if meta.ArtifactName == "" {
+			meta.ArtifactName = fmt.Sprintf("#%d", artifactID)
+		}
+		meta.PrivateLink = h != ""
+		s.maybeRecordDownload(r, meta)
 		return nil, "", nil, redirect(tmp, http.StatusFound)
 	}
 	var links []ArtifactLink

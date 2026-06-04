@@ -60,6 +60,16 @@ func New(bundle *i18n.Bundle, baseURL string) (*Engine, error) {
 			return ""
 		},
 		"lower": strings.ToLower,
+		"barPct": func(count, max int64) int {
+			if max <= 0 || count <= 0 {
+				return 0
+			}
+			p := count * 100 / max
+			if p > 100 {
+				return 100
+			}
+			return int(p)
+		},
 	}
 	t, err := template.New("").Funcs(funcs).ParseFS(templateFS, "templates/*.html")
 	if err != nil {

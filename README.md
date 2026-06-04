@@ -68,6 +68,10 @@ To access public repositories where the app is not installed, set `FALLBACK_INST
 | `URL` | No | Public absolute service URL, or comma-separated list of URLs; defaults to `http://localhost:{PORT}/`. The first URL is primary; links and OAuth redirects use the request host when it matches a configured URL |
 | `DATABASE_FILE` | No | SQLite database path; defaults to `./db.sqlite` |
 | `DEFAULT_LOCALE` | No | Fallback language, `en` or `ru`; defaults to `en` |
+| `DOWNLOAD_ANALYTICS_COLLECT` | No | Record artifact `.zip` downloads in SQLite; defaults to off |
+| `DOWNLOAD_ANALYTICS_VIEW` | No | Show analytics UI at `/analytics/downloads?token=…`; requires collect + secret; defaults to off |
+| `DOWNLOAD_ANALYTICS_SECRET` | When view enabled | Shared secret for the analytics page (min 16 characters) |
+| `DOWNLOAD_ANALYTICS_RETENTION_DAYS` | No | Delete events older than N days on startup when collect is enabled; defaults to `180` when collect is on, otherwise unused |
 
 Generate a secret:
 
@@ -119,6 +123,14 @@ docker buildx build \
 BuildKit caches modules and the Go build cache between builds. The production image is based on `distroless/static-debian12:nonroot` and runs the process without root privileges.
 
 For production, set `URL` to a public HTTPS URL, or several comma-separated URLs if the service is reachable on multiple domains. Register each `{URL}setup` and `{URL}dashboard` in the GitHub App settings. Do not publish the `.env` file, PEM key, SQLite database, or links containing `h`.
+
+### Download analytics (optional)
+
+By default the service does not record or expose download statistics. To enable collection, set `DOWNLOAD_ANALYTICS_COLLECT=true`. To open the dashboard, also set `DOWNLOAD_ANALYTICS_VIEW=true` and a long random `DOWNLOAD_ANALYTICS_SECRET`, then visit:
+
+`{URL}analytics/downloads?token=YOUR_SECRET`
+
+The page includes totals, time series, top repositories/artifacts/workflows/branches, referrers, and a recent-events table. Client IPs are stored only as a hash derived from `APP_SECRET`.
 
 ## Verification
 
