@@ -24,10 +24,10 @@ type Config struct {
 	DatabaseFile           string
 	DefaultLocale          string
 
-	DownloadAnalyticsCollect   bool
-	DownloadAnalyticsView      bool
-	DownloadAnalyticsSecret    string
-	DownloadAnalyticsRetention int
+	DownloadAnalyticsCollect     bool
+	DownloadAnalyticsView        bool
+	DownloadAnalyticsAdminSecret string
+	DownloadAnalyticsRetention   int
 }
 
 func Load() Config {
@@ -65,10 +65,10 @@ func Load() Config {
 		DatabaseFile:           db,
 		DefaultLocale:          locale,
 
-		DownloadAnalyticsCollect:   envBool("DOWNLOAD_ANALYTICS_COLLECT"),
-		DownloadAnalyticsView:      envBool("DOWNLOAD_ANALYTICS_VIEW"),
-		DownloadAnalyticsSecret:    os.Getenv("DOWNLOAD_ANALYTICS_SECRET"),
-		DownloadAnalyticsRetention: retention,
+		DownloadAnalyticsCollect:     envBool("DOWNLOAD_ANALYTICS_COLLECT"),
+		DownloadAnalyticsView:        envBool("DOWNLOAD_ANALYTICS_VIEW"),
+		DownloadAnalyticsAdminSecret: os.Getenv("DOWNLOAD_ANALYTICS_ADMIN_SECRET"),
+		DownloadAnalyticsRetention:   retention,
 	}
 }
 
@@ -86,15 +86,18 @@ func (c Config) Validate() error {
 	if (c.GitHubClientID == "") != (c.GitHubClientSecret == "") {
 		problems = append(problems, "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be configured together")
 	}
-	if c.DownloadAnalyticsView {
-		if c.DownloadAnalyticsSecret == "" {
-			problems = append(problems, "DOWNLOAD_ANALYTICS_SECRET is required when DOWNLOAD_ANALYTICS_VIEW is enabled")
-		} else if len(c.DownloadAnalyticsSecret) < 16 {
-			problems = append(problems, "DOWNLOAD_ANALYTICS_SECRET must be at least 16 characters when analytics UI is enabled")
-		}
-	}
 	if c.DownloadAnalyticsView && !c.DownloadAnalyticsCollect {
 		problems = append(problems, "DOWNLOAD_ANALYTICS_COLLECT must be enabled when DOWNLOAD_ANALYTICS_VIEW is enabled")
+	}
+	if c.DownloadAnalyticsView {
+		hasOAuth := c.GitHubClientID != "" && c.GitHubClientSecret != ""
+		hasAdmin := len(c.DownloadAnalyticsAdminSecret) >= 16
+		if !hasOAuth && !hasAdmin {
+			problems = append(problems, "DOWNLOAD_ANALYTICS_VIEW requires GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET (user analytics) and/or DOWNLOAD_ANALYTICS_ADMIN_SECRET of at least 16 characters (instance owner)")
+		}
+		if c.DownloadAnalyticsAdminSecret != "" && len(c.DownloadAnalyticsAdminSecret) < 16 {
+			problems = append(problems, "DOWNLOAD_ANALYTICS_ADMIN_SECRET must be at least 16 characters when set")
+		}
 	}
 	for i, raw := range c.PublicURLs {
 		base, err := url.Parse(raw)

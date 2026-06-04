@@ -2,6 +2,7 @@ package render
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -53,6 +54,19 @@ func New(bundle *i18n.Bundle, baseURL string) (*Engine, error) {
 			}
 			return key
 		},
+		"trf": func(m map[string]string, key string, args ...any) string {
+			s := key
+			if m != nil {
+				if t, ok := m[key]; ok && t != "" {
+					s = t
+				}
+			}
+			if len(args) == 0 {
+				return s
+			}
+			return fmt.Sprintf(s, args...)
+		},
+		"add": func(a, b int) int { return a + b },
 		"part": func(v any, i int) string {
 			if s, ok := v.([]string); ok && i >= 0 && i < len(s) {
 				return s[i]

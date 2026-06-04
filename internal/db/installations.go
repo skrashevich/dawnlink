@@ -137,6 +137,40 @@ func (s *Store) Delete(repoOwner string) error {
 	return err
 }
 
+// AllInstanceRepoRefs returns every repository registered through a GitHub App installation.
+func (s *Store) AllInstanceRepoRefs() ([]RepoRef, error) {
+	rows, err := s.db.Query(`SELECT repo_owner, public_repos, private_repos FROM installations`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	seen := make(map[string]struct{})
+	var refs []RepoRef
+	for rows.Next() {
+		var owner, pub, priv string
+		if err := rows.Scan(&owner, &pub, &priv); err != nil {
+			return nil, err
+		}
+		for _, name := range NewDelimitedSet(pub).Sorted() {
+			key := strings.ToLower(owner) + "/" + strings.ToLower(name)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			refs = append(refs, RepoRef{Owner: owner, Repo: name})
+		}
+		for _, name := range NewDelimitedSet(priv).Sorted() {
+			key := strings.ToLower(owner) + "/" + strings.ToLower(name)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			refs = append(refs, RepoRef{Owner: owner, Repo: name})
+		}
+	}
+	return refs, rows.Err()
+}
+
 func (s *Store) Password(inst *RepoInstallation, repoName string) string {
 	h := hmac.New(sha256.New, []byte(s.appSecret))
 	fmt.Fprintf(h, "%d\n%s\n%s", inst.InstallationID, inst.RepoOwner, repoName)

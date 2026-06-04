@@ -144,71 +144,76 @@ func (s *Store) PurgeDownloadEventsOlderThan(days int) (int64, error) {
 	return res.RowsAffected()
 }
 
-func (s *Store) DownloadAnalyticsSummary(recentLimit int) (*DownloadAnalyticsSummary, error) {
+// DownloadAnalyticsSummary returns aggregated download stats limited to the given repositories.
+func (s *Store) DownloadAnalyticsSummary(refs []RepoRef, recentLimit int) (*DownloadAnalyticsSummary, error) {
 	if recentLimit <= 0 {
 		recentLimit = 50
 	}
 	if recentLimit > 200 {
 		recentLimit = 200
 	}
+	scope, scopeArgs := repoScopeClause(refs)
 	out := &DownloadAnalyticsSummary{}
 	now := time.Now().UTC()
-	if err := s.scanCount(&out.TotalAll, `SELECT COUNT(*) FROM download_events`); err != nil {
+	if err := s.scanCount(&out.TotalAll, `SELECT COUNT(*) FROM download_events WHERE 1=1`+scope, scopeArgs...); err != nil {
 		return nil, err
 	}
-	if err := s.scanCount(&out.Total24h, `SELECT COUNT(*) FROM download_events WHERE created_at >= ?`, now.Add(-24*time.Hour).Format(time.RFC3339)); err != nil {
+	if err := s.scanCount(&out.Total24h, `SELECT COUNT(*) FROM download_events WHERE created_at >= ?`+scope,
+		appendScopeArgs(scopeArgs, now.Add(-24*time.Hour).Format(time.RFC3339))...); err != nil {
 		return nil, err
 	}
-	if err := s.scanCount(&out.Total7d, `SELECT COUNT(*) FROM download_events WHERE created_at >= ?`, now.AddDate(0, 0, -7).Format(time.RFC3339)); err != nil {
+	if err := s.scanCount(&out.Total7d, `SELECT COUNT(*) FROM download_events WHERE created_at >= ?`+scope,
+		appendScopeArgs(scopeArgs, now.AddDate(0, 0, -7).Format(time.RFC3339))...); err != nil {
 		return nil, err
 	}
-	if err := s.scanCount(&out.Total30d, `SELECT COUNT(*) FROM download_events WHERE created_at >= ?`, now.AddDate(0, 0, -30).Format(time.RFC3339)); err != nil {
+	if err := s.scanCount(&out.Total30d, `SELECT COUNT(*) FROM download_events WHERE created_at >= ?`+scope,
+		appendScopeArgs(scopeArgs, now.AddDate(0, 0, -30).Format(time.RFC3339))...); err != nil {
 		return nil, err
 	}
-	if err := s.scanCount(&out.PrivateCount, `SELECT COUNT(*) FROM download_events WHERE private_link = 1`); err != nil {
+	if err := s.scanCount(&out.PrivateCount, `SELECT COUNT(*) FROM download_events WHERE private_link = 1`+scope, scopeArgs...); err != nil {
 		return nil, err
 	}
 	out.PublicCount = out.TotalAll - out.PrivateCount
-	if err := s.scanCount(&out.UniqueRepos, `SELECT COUNT(DISTINCT owner || '/' || repo) FROM download_events`); err != nil {
+	if err := s.scanCount(&out.UniqueRepos, `SELECT COUNT(DISTINCT owner || '/' || repo) FROM download_events WHERE 1=1`+scope, scopeArgs...); err != nil {
 		return nil, err
 	}
-	if err := s.scanCount(&out.UniqueClients, `SELECT COUNT(DISTINCT client_ip_hash) FROM download_events WHERE client_ip_hash != ''`); err != nil {
+	if err := s.scanCount(&out.UniqueClients, `SELECT COUNT(DISTINCT client_ip_hash) FROM download_events WHERE client_ip_hash != ''`+scope, scopeArgs...); err != nil {
 		return nil, err
 	}
 	var err error
-	out.ByDay, err = s.downloadCountsByExpr(`strftime('%Y-%m-%d', created_at)`, 30)
+	out.ByDay, err = s.downloadCountsByExpr(`strftime('%Y-%m-%d', created_at)`, 30, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.ByHour, err = s.downloadCountsByExpr(`strftime('%Y-%m-%d %H:00', created_at)`, 48)
+	out.ByHour, err = s.downloadCountsByExpr(`strftime('%Y-%m-%d %H:00', created_at)`, 48, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.TopRepos, err = s.downloadTop(`owner || '/' || repo`, 15)
+	out.TopRepos, err = s.downloadTop(`owner || '/' || repo`, 15, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.TopArtifacts, err = s.downloadTop(`owner || '/' || repo || ' → ' || artifact_name`, 20)
+	out.TopArtifacts, err = s.downloadTop(`owner || '/' || repo || ' → ' || artifact_name`, 20, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.TopWorkflows, err = s.downloadTopFiltered(`workflow`, `workflow != ''`, 15)
+	out.TopWorkflows, err = s.downloadTopFiltered(`workflow`, `workflow != ''`, 15, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.TopBranches, err = s.downloadTopFiltered(`branch`, `branch != ''`, 15)
+	out.TopBranches, err = s.downloadTopFiltered(`branch`, `branch != ''`, 15, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.TopRouteKinds, err = s.downloadTop(`route_kind`, 5)
+	out.TopRouteKinds, err = s.downloadTop(`route_kind`, 5, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.TopReferers, err = s.downloadTopFiltered(`referer`, `referer != ''`, 10)
+	out.TopReferers, err = s.downloadTopFiltered(`referer`, `referer != ''`, 10, scope, scopeArgs)
 	if err != nil {
 		return nil, err
 	}
-	out.Recent, err = s.downloadRecent(recentLimit)
+	out.Recent, err = s.downloadRecent(recentLimit, scope, scopeArgs)
 	return out, err
 }
 
@@ -216,14 +221,16 @@ func (s *Store) scanCount(dst *int64, query string, args ...any) error {
 	return s.db.QueryRow(query, args...).Scan(dst)
 }
 
-func (s *Store) downloadCountsByExpr(expr string, limit int) ([]DayCount, error) {
+func (s *Store) downloadCountsByExpr(expr string, limit int, scope string, scopeArgs []any) ([]DayCount, error) {
 	q := fmt.Sprintf(`
 SELECT %s AS bucket, COUNT(*) AS c
 FROM download_events
+WHERE 1=1%s
 GROUP BY bucket
 ORDER BY bucket DESC
-LIMIT ?`, expr)
-	rows, err := s.db.Query(q, limit)
+LIMIT ?`, expr, scope)
+	args := append(append([]any{}, scopeArgs...), limit)
+	rows, err := s.db.Query(q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -245,29 +252,32 @@ LIMIT ?`, expr)
 	return raw, nil
 }
 
-func (s *Store) downloadTop(labelExpr string, limit int) ([]CountRow, error) {
+func (s *Store) downloadTop(labelExpr string, limit int, scope string, scopeArgs []any) ([]CountRow, error) {
 	q := fmt.Sprintf(`
 SELECT %s AS label, COUNT(*) AS c
 FROM download_events
+WHERE 1=1%s
 GROUP BY label
 ORDER BY c DESC, label ASC
-LIMIT ?`, labelExpr)
-	return s.queryCountRows(q, limit)
+LIMIT ?`, labelExpr, scope)
+	args := append(append([]any{}, scopeArgs...), limit)
+	return s.queryCountRows(q, args...)
 }
 
-func (s *Store) downloadTopFiltered(labelExpr, where string, limit int) ([]CountRow, error) {
+func (s *Store) downloadTopFiltered(labelExpr, where string, limit int, scope string, scopeArgs []any) ([]CountRow, error) {
 	q := fmt.Sprintf(`
 SELECT %s AS label, COUNT(*) AS c
 FROM download_events
-WHERE %s
+WHERE %s%s
 GROUP BY label
 ORDER BY c DESC, label ASC
-LIMIT ?`, labelExpr, where)
-	return s.queryCountRows(q, limit)
+LIMIT ?`, labelExpr, where, scope)
+	args := append(append([]any{}, scopeArgs...), limit)
+	return s.queryCountRows(q, args...)
 }
 
-func (s *Store) queryCountRows(query string, limit int) ([]CountRow, error) {
-	rows, err := s.db.Query(query, limit)
+func (s *Store) queryCountRows(query string, args ...any) ([]CountRow, error) {
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -283,14 +293,17 @@ func (s *Store) queryCountRows(query string, limit int) ([]CountRow, error) {
 	return out, rows.Err()
 }
 
-func (s *Store) downloadRecent(limit int) ([]DownloadEventRow, error) {
-	rows, err := s.db.Query(`
+func (s *Store) downloadRecent(limit int, scope string, scopeArgs []any) ([]DownloadEventRow, error) {
+	q := `
 SELECT id, created_at, route_kind, owner, repo, artifact_name, workflow, branch,
   run_id, artifact_id, status_filter, run_event, private_link,
   request_host, user_agent, referer, path
 FROM download_events
+WHERE 1=1` + scope + `
 ORDER BY id DESC
-LIMIT ?`, limit)
+LIMIT ?`
+	args := append(append([]any{}, scopeArgs...), limit)
+	rows, err := s.db.Query(q, args...)
 	if err != nil {
 		return nil, err
 	}

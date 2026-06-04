@@ -74,8 +74,14 @@
   "logs_expired": "It seems that the logs for this job have expired.",
   "footer_source": "Source code",
   "footer_issues": "Report an issue",
+  "analytics_back": "← Home",
+  "analytics_eyebrow": "Artifact downloads",
+  "analytics_repo_count": "%d repositories in this view",
   "analytics_title": "Download analytics",
-  "analytics_lead": "Statistics for artifact ZIP downloads served through dawnl.ink permanent links.",
+  "analytics_lead_user": "Statistics for artifact ZIP downloads in repositories you manage through the GitHub App.",
+  "analytics_lead_instance": "Statistics for artifact ZIP downloads across all repositories connected to this dawnl.ink instance.",
+  "analytics_scope_user": "Your repositories only",
+  "analytics_scope_instance": "Instance owner view — all connected repositories",
   "analytics_total": "All time",
   "analytics_24h": "Last 24 hours",
   "analytics_7d": "Last 7 days",
@@ -109,5 +115,5 @@
   "analytics_run": "Run ID",
   "analytics_yes": "Yes",
   "analytics_no": "No",
-  "analytics_footnote": "Client IPs are stored only as a salted hash. Raw ?h= tokens are never logged. Enable collection and UI via DOWNLOAD_ANALYTICS_* environment variables."
+  "analytics_footnote": "Client IPs are stored only as a salted hash. Raw ?h= tokens are never logged. Repository owners use GitHub OAuth (dashboard). The instance owner opens this page with DOWNLOAD_ANALYTICS_ADMIN_SECRET (?token= or X-Download-Analytics-Admin-Token)."
 }

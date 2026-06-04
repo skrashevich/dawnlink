@@ -74,8 +74,14 @@
   "logs_expired": "Похоже, логи для этого job истекли.",
   "footer_source": "Исходный код",
   "footer_issues": "Сообщить о проблеме",
+  "analytics_back": "← На главную",
+  "analytics_eyebrow": "Скачивания артефактов",
+  "analytics_repo_count": "%d репозиториев в этой выборке",
   "analytics_title": "Аналитика скачиваний",
-  "analytics_lead": "Статистика по ZIP-скачиваниям артефактов через постоянные ссылки dawnl.ink.",
+  "analytics_lead_user": "Статистика по ZIP-скачиваниям артефактов в репозиториях, которыми вы управляете через GitHub App.",
+  "analytics_lead_instance": "Статистика по ZIP-скачиваниям во всех репозиториях, подключённых к этому инстансу dawnl.ink.",
+  "analytics_scope_user": "Только ваши репозитории",
+  "analytics_scope_instance": "Владелец инстанса — все подключённые репозитории",
   "analytics_total": "Всего",
   "analytics_24h": "За 24 часа",
   "analytics_7d": "За 7 дней",
@@ -109,5 +115,5 @@
   "analytics_run": "Run ID",
   "analytics_yes": "Да",
   "analytics_no": "Нет",
-  "analytics_footnote": "IP клиентов сохраняются только в виде солируемого хэша. Сырые токены ?h= не логируются. Включите сбор и UI через переменные DOWNLOAD_ANALYTICS_*."
+  "analytics_footnote": "IP клиентов сохраняются только в виде солируемого хэша. Сырые токены ?h= не логируются. Владельцы репозиториев входят через GitHub OAuth (dashboard). Владелец инстанса открывает страницу с DOWNLOAD_ANALYTICS_ADMIN_SECRET (?token= или заголовок X-Download-Analytics-Admin-Token)."
 }

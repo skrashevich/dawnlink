@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/skrashevich/dawnlink/internal/db"
@@ -109,7 +108,7 @@ func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, messages []
 		"ExampleDest":     s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", example.owner, example.repo, example.workflow, example.branch, example.artifact)),
 		"ExampleArtifact": example.artifact,
 		"ReconfigureURL":  fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
-		"AuthURL":         s.oauthURL(r),
+		"AuthURL":         s.oauthURL(r, "/dashboard"),
 		"HasAuth":         s.cfg.GitHubClientID != "" && s.cfg.GitHubClientSecret != "",
 		"HasMessages":     len(messages) > 0,
 	}
@@ -125,73 +124,14 @@ type workflowExample struct {
 	workflowURL, owner, repo, workflow, branch, artifact string
 }
 
-func (s *Server) oauthURL(r *http.Request) string {
-	v := url.Values{
-		"client_id":    {s.cfg.GitHubClientID},
-		"scope":        {""},
-		"redirect_uri": {s.abs(r, "/dashboard")},
-	}
-	return "https://github.com/login/oauth/authorize?" + v.Encode()
-}
-
 func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		w.Header().Set("X-Robots-Tag", "noindex")
-		return redirect(s.oauthURL(r), http.StatusFound)
-	}
-	tokenStr, err := github.ExchangeOAuthCode(s.cfg.GitHubClientID, s.cfg.GitHubClientSecret, code)
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "bad_verification_code") {
-			return redirect("/dashboard", http.StatusFound)
-		}
-		return err
-	}
-	userTok := github.UserToken{Value: tokenStr}
-	installs, err := github.ListUserInstallations(userTok)
+	userTok, err := s.resolveUserSession(w, r, "/dashboard")
 	if err != nil {
 		return err
 	}
-	var accounts []dashboardAccount
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var firstErr error
-	var errOnce sync.Once
-	for _, inst := range installs {
-		wg.Go(func() {
-			ri, err := s.store.RefreshFromInstallation(inst, userTok)
-			if err != nil {
-				errOnce.Do(func() { firstErr = err })
-				return
-			}
-			acc := dashboardAccount{Owner: ri.RepoOwner}
-			for _, name := range ri.PublicRepos.Sorted() {
-				acc.PublicRepos = append(acc.PublicRepos, dashboardRepo{
-					Name: name,
-					URL:  s.dashboardRepoURL(r, ri.RepoOwner, name, false, ""),
-				})
-			}
-			for _, name := range ri.PrivateRepos.Sorted() {
-				acc.PrivateRepos = append(acc.PrivateRepos, dashboardRepo{
-					Name: name,
-					URL:  s.dashboardRepoURL(r, ri.RepoOwner, name, true, s.store.Password(ri, name)),
-				})
-			}
-			mu.Lock()
-			accounts = append(accounts, acc)
-			mu.Unlock()
-		})
-	}
-	wg.Wait()
-	if firstErr != nil {
-		return firstErr
-	}
-	sort.Slice(accounts, func(i, j int) bool {
-		return strings.ToLower(accounts[i].Owner) < strings.ToLower(accounts[j].Owner)
-	})
-	totalRepos := 0
-	for _, acc := range accounts {
-		totalRepos += len(acc.PublicRepos) + len(acc.PrivateRepos)
+	accounts, totalRepos, err := s.loadDashboardAccounts(r, userTok)
+	if err != nil {
+		return err
 	}
 	w.Header().Set("X-Robots-Tag", "noindex")
 	return s.renderPage(w, r, "dashboard.html", render.PageData{

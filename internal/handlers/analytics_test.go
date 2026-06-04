@@ -21,7 +21,7 @@ func TestDownloadAnalyticsDisabledByDefault(t *testing.T) {
 		BaseURL:       "http://localhost:8080/",
 		PublicURLs:    []string{"http://localhost:8080/"},
 	})
-	req := httptest.NewRequest(http.MethodGet, "/analytics/downloads?token=secret", nil)
+	req := httptest.NewRequest(http.MethodGet, "/analytics/downloads", nil)
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNotFound {
@@ -33,53 +33,111 @@ func TestDownloadAnalyticsURL(t *testing.T) {
 	cfg := config.Config{
 		BaseURL:                  "http://localhost:8080/",
 		PublicURLs:               []string{"http://localhost:8080/"},
+		GitHubClientID:           "client",
+		GitHubClientSecret:       "secret",
 		DownloadAnalyticsCollect: true,
 		DownloadAnalyticsView:    true,
-		DownloadAnalyticsSecret:  "my-analytics-secret",
 	}
 	srv := analyticsTestServer(t, cfg)
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
 	got := srv.downloadAnalyticsURL(req)
-	want := "http://localhost:8080/analytics/downloads?token=my-analytics-secret"
+	want := "http://localhost:8080/analytics/downloads"
 	if got != want {
 		t.Fatalf("downloadAnalyticsURL() = %q, want %q", got, want)
 	}
-	cfg.DownloadAnalyticsView = false
-	srv2 := analyticsTestServer(t, cfg)
-	if srv2.downloadAnalyticsURL(req) != "" {
-		t.Fatal("expected empty URL when view disabled")
+}
+
+func TestDownloadAnalyticsAdminInstanceScope(t *testing.T) {
+	cfg := config.Config{
+		GitHubAppID:                  1,
+		GitHubPEMPath:                "x",
+		AppSecret:                    "01234567890123456789012345678901",
+		BaseURL:                      "http://localhost:8080/",
+		PublicURLs:                   []string{"http://localhost:8080/"},
+		DownloadAnalyticsCollect:     true,
+		DownloadAnalyticsView:        true,
+		DownloadAnalyticsAdminSecret: "owner-admin-secret-32chars-min",
+	}
+	srv := analyticsTestServer(t, cfg)
+
+	if err := srv.store.Write(&db.RepoInstallation{
+		RepoOwner:      "acme",
+		InstallationID: 1,
+		PublicRepos:    db.NewDelimitedSet("app"),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := srv.store.RecordDownload(db.DownloadRecord{
+		RouteKind: db.RouteArtifact, Owner: "acme", Repo: "app", ArtifactName: "mine",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := srv.store.RecordDownload(db.DownloadRecord{
+		RouteKind: db.RouteArtifact, Owner: "other", Repo: "lib", ArtifactName: "theirs",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/analytics/downloads?token=owner-admin-secret-32chars-min", nil)
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Instance owner") && !strings.Contains(rec.Body.String(), "Владелец инстанса") {
+		t.Fatal("expected instance owner scope label")
+	}
+	if strings.Contains(rec.Body.String(), "theirs") {
+		t.Fatal("instance view must not include downloads outside connected repos")
 	}
 }
 
-func TestDownloadAnalyticsRequiresToken(t *testing.T) {
+func TestDownloadAnalyticsWrongAdminToken(t *testing.T) {
 	cfg := config.Config{
-		GitHubAppID:                1,
-		GitHubPEMPath:              "x",
-		AppSecret:                  "01234567890123456789012345678901",
-		BaseURL:                    "http://localhost:8080/",
-		PublicURLs:                 []string{"http://localhost:8080/"},
-		DownloadAnalyticsCollect:   true,
-		DownloadAnalyticsView:      true,
-		DownloadAnalyticsSecret:    "analytics-secret-token",
+		GitHubAppID:                  1,
+		GitHubPEMPath:                "x",
+		AppSecret:                    "01234567890123456789012345678901",
+		BaseURL:                      "http://localhost:8080/",
+		PublicURLs:                   []string{"http://localhost:8080/"},
+		DownloadAnalyticsCollect:     true,
+		DownloadAnalyticsView:        true,
+		DownloadAnalyticsAdminSecret: "owner-admin-secret-32chars-min",
+	}
+	srv := analyticsTestServer(t, cfg)
+	req := httptest.NewRequest(http.MethodGet, "/analytics/downloads?token=wrong", nil)
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", rec.Code)
+	}
+}
+
+func TestDownloadAnalyticsRequiresOAuth(t *testing.T) {
+	cfg := config.Config{
+		GitHubAppID:              1,
+		GitHubPEMPath:            "x",
+		AppSecret:                "01234567890123456789012345678901",
+		BaseURL:                  "http://localhost:8080/",
+		PublicURLs:               []string{"http://localhost:8080/"},
+		GitHubClientID:           "client",
+		GitHubClientSecret:       "secret",
+		DownloadAnalyticsCollect: true,
+		DownloadAnalyticsView:    true,
 	}
 	srv := analyticsTestServer(t, cfg)
 
 	req := httptest.NewRequest(http.MethodGet, "/analytics/downloads", nil)
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, req)
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("missing token status = %d, want 404", rec.Code)
+	if rec.Code != http.StatusFound {
+		t.Fatalf("status = %d, want 302 to GitHub OAuth", rec.Code)
 	}
-
-	req = httptest.NewRequest(http.MethodGet, "/analytics/downloads?token=analytics-secret-token", nil)
-	rec = httptest.NewRecorder()
-	srv.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK {
-		t.Fatalf("valid token status = %d, want 200", rec.Code)
+	loc := rec.Header().Get("Location")
+	if !strings.HasPrefix(loc, "https://github.com/login/oauth/authorize") {
+		t.Fatalf("Location = %q", loc)
 	}
-	body := rec.Body.String()
-	if !strings.Contains(body, "Download analytics") && !strings.Contains(body, "Аналитика") {
-		t.Fatal("expected analytics page body")
+	if !strings.Contains(loc, "state=%2Fanalytics%2Fdownloads") && !strings.Contains(loc, "state=/analytics/downloads") {
+		t.Fatalf("OAuth state for analytics missing in %q", loc)
 	}
 }
 

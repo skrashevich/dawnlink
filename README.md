@@ -69,8 +69,8 @@ To access public repositories where the app is not installed, set `FALLBACK_INST
 | `DATABASE_FILE` | No | SQLite database path; defaults to `./db.sqlite` |
 | `DEFAULT_LOCALE` | No | Fallback language, `en` or `ru`; defaults to `en` |
 | `DOWNLOAD_ANALYTICS_COLLECT` | No | Record artifact `.zip` downloads in SQLite; defaults to off |
-| `DOWNLOAD_ANALYTICS_VIEW` | No | Show analytics UI at `/analytics/downloads?token=…`; requires collect + secret; defaults to off |
-| `DOWNLOAD_ANALYTICS_SECRET` | When view enabled | Shared secret for the analytics page (min 16 characters) |
+| `DOWNLOAD_ANALYTICS_VIEW` | No | Analytics UI at `/analytics/downloads`; requires collect plus OAuth and/or admin secret; defaults to off |
+| `DOWNLOAD_ANALYTICS_ADMIN_SECRET` | For instance owner | Secret for full instance analytics (all repositories in SQLite installations); min 16 characters |
 | `DOWNLOAD_ANALYTICS_RETENTION_DAYS` | No | Delete events older than N days on startup when collect is enabled; defaults to `180` when collect is on, otherwise unused |
 
 Generate a secret:
@@ -126,9 +126,13 @@ For production, set `URL` to a public HTTPS URL, or several comma-separated URLs
 
 ### Download analytics (optional)
 
-By default the service does not record or expose download statistics. To enable collection, set `DOWNLOAD_ANALYTICS_COLLECT=true`. To open the dashboard, also set `DOWNLOAD_ANALYTICS_VIEW=true` and a long random `DOWNLOAD_ANALYTICS_SECRET`, then visit:
+By default the service does not record or expose download statistics. Enable `DOWNLOAD_ANALYTICS_COLLECT=true` and `DOWNLOAD_ANALYTICS_VIEW=true`.
 
-`{URL}analytics/downloads?token=YOUR_SECRET`
+**Repository owners** sign in with GitHub OAuth (dashboard link or `/analytics/downloads`). They only see downloads for repositories in their own GitHub App installations.
+
+**Instance owner** opens `{URL}analytics/downloads?token=ADMIN_SECRET` (or sends header `X-Download-Analytics-Admin-Token`). They see downloads for every repository registered in the instance database (all GitHub App installations), not other users’ private views.
+
+Configure `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` for user access and/or `DOWNLOAD_ANALYTICS_ADMIN_SECRET` for the owner view (at least one is required when the UI is enabled).
 
 The page includes totals, time series, top repositories/artifacts/workflows/branches, referrers, and a recent-events table. Client IPs are stored only as a hash derived from `APP_SECRET`.
 

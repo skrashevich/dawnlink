@@ -37,7 +37,7 @@ func TestRecordDownloadAndSummary(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sum, err := store.DownloadAnalyticsSummary(10)
+	sum, err := store.DownloadAnalyticsSummary([]RepoRef{{Owner: "acme", Repo: "app"}}, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,12 +80,36 @@ VALUES ('2000-01-01T00:00:00Z', 'artifact', 'o', 'r', 'old')`)
 	if n != 1 {
 		t.Fatalf("purged %d rows, want 1", n)
 	}
-	sum, err := store.DownloadAnalyticsSummary(5)
+	sum, err := store.DownloadAnalyticsSummary([]RepoRef{{Owner: "o", Repo: "r"}}, 5)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if sum.TotalAll != 1 {
 		t.Fatalf("TotalAll after purge = %d, want 1", sum.TotalAll)
+	}
+}
+
+func TestDownloadAnalyticsSummaryRepoScope(t *testing.T) {
+	dir := t.TempDir()
+	store, err := Open(filepath.Join(dir, "test.db"), "01234567890123456789012345678901", nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	if err := store.RecordDownload(DownloadRecord{RouteKind: RouteArtifact, Owner: "mine", Repo: "app", ArtifactName: "a"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RecordDownload(DownloadRecord{RouteKind: RouteArtifact, Owner: "other", Repo: "app", ArtifactName: "b"}); err != nil {
+		t.Fatal(err)
+	}
+
+	mine, err := store.DownloadAnalyticsSummary([]RepoRef{{Owner: "mine", Repo: "app"}}, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mine.TotalAll != 1 {
+		t.Fatalf("scoped TotalAll = %d, want 1", mine.TotalAll)
 	}
 }
 

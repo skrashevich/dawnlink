@@ -40,24 +40,32 @@ func TestValidateDownloadAnalytics(t *testing.T) {
 		t.Fatalf("default analytics off: %v", err)
 	}
 
-	viewOnly := base
-	viewOnly.DownloadAnalyticsView = true
-	viewOnly.DownloadAnalyticsSecret = "short"
-	if err := viewOnly.Validate(); err == nil {
-		t.Fatal("view without collect/secret accepted")
+	viewNoAuth := base
+	viewNoAuth.DownloadAnalyticsCollect = true
+	viewNoAuth.DownloadAnalyticsView = true
+	if err := viewNoAuth.Validate(); err == nil {
+		t.Fatal("view without OAuth or admin secret accepted")
+	}
+
+	adminOnly := base
+	adminOnly.DownloadAnalyticsCollect = true
+	adminOnly.DownloadAnalyticsView = true
+	adminOnly.DownloadAnalyticsAdminSecret = "01234567890123456789012345678901"
+	if err := adminOnly.Validate(); err != nil {
+		t.Fatalf("admin-only analytics config: %v", err)
 	}
 
 	view := base
+	view.GitHubClientID = "client"
+	view.GitHubClientSecret = "secret"
 	view.DownloadAnalyticsCollect = true
 	view.DownloadAnalyticsView = true
-	view.DownloadAnalyticsSecret = "0123456789012345"
 	if err := view.Validate(); err != nil {
 		t.Fatalf("valid analytics config: %v", err)
 	}
 
-	viewNoCollect := base
-	viewNoCollect.DownloadAnalyticsView = true
-	viewNoCollect.DownloadAnalyticsSecret = "01234567890123456789012345678901"
+	viewNoCollect := view
+	viewNoCollect.DownloadAnalyticsCollect = false
 	if err := viewNoCollect.Validate(); err == nil {
 		t.Fatal("view without collect accepted")
 	}

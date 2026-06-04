@@ -3,165 +3,206 @@
 {{end}}
 
 {{define "download_analytics_body"}}
-<section class="analytics">
-  <header class="analytics-header">
-    <h1>{{tr .Tr "analytics_title"}}</h1>
-    <p class="analytics-lead">{{tr .Tr "analytics_lead"}}</p>
+{{$scope := index .Extra "AnalyticsScope"}}
+{{$maxDay := index .Extra "MaxDayCount"}}
+{{$maxHour := index .Extra "MaxHourCount"}}
+<section class="analytics" data-scope="{{$scope}}">
+  <header class="analytics-hero card">
+    <div class="analytics-hero__main">
+      <a class="analytics-back" href="{{.BaseURL}}">{{tr .Tr "analytics_back"}}</a>
+      <p class="analytics-eyebrow">{{tr .Tr "analytics_eyebrow"}}</p>
+      <h1 class="analytics-title">{{tr .Tr "analytics_title"}}</h1>
+      <p class="analytics-lead">{{index .Extra "AnalyticsLead"}}</p>
+      {{if eq $scope "instance"}}
+      <span class="analytics-scope analytics-scope--instance">{{tr .Tr "analytics_scope_instance"}}</span>
+      {{else}}
+      <span class="analytics-scope analytics-scope--user">{{tr .Tr "analytics_scope_user"}}</span>
+      {{end}}
+      <p class="analytics-repo-count">{{trf .Tr "analytics_repo_count" (index .Extra "ScopedRepos")}}</p>
+    </div>
+    <div class="analytics-hero__highlight" aria-label="{{tr .Tr "analytics_total"}}">
+      <span class="analytics-hero__value">{{index .Extra "TotalAll"}}</span>
+      <span class="analytics-hero__label">{{tr .Tr "analytics_total"}}</span>
+      <div class="analytics-hero__pulse" aria-hidden="true"></div>
+    </div>
   </header>
 
-  <div class="analytics-cards">
-    <article class="analytics-card">
-      <span class="analytics-card-label">{{tr .Tr "analytics_total"}}</span>
-      <strong class="analytics-card-value">{{index .Extra "TotalAll"}}</strong>
+  <div class="analytics-kpi">
+    <article class="analytics-kpi__card">
+      <span class="analytics-kpi__label">{{tr .Tr "analytics_24h"}}</span>
+      <strong class="analytics-kpi__value">{{index .Extra "Total24h"}}</strong>
     </article>
-    <article class="analytics-card">
-      <span class="analytics-card-label">{{tr .Tr "analytics_24h"}}</span>
-      <strong class="analytics-card-value">{{index .Extra "Total24h"}}</strong>
+    <article class="analytics-kpi__card">
+      <span class="analytics-kpi__label">{{tr .Tr "analytics_7d"}}</span>
+      <strong class="analytics-kpi__value">{{index .Extra "Total7d"}}</strong>
     </article>
-    <article class="analytics-card">
-      <span class="analytics-card-label">{{tr .Tr "analytics_7d"}}</span>
-      <strong class="analytics-card-value">{{index .Extra "Total7d"}}</strong>
+    <article class="analytics-kpi__card">
+      <span class="analytics-kpi__label">{{tr .Tr "analytics_30d"}}</span>
+      <strong class="analytics-kpi__value">{{index .Extra "Total30d"}}</strong>
     </article>
-    <article class="analytics-card">
-      <span class="analytics-card-label">{{tr .Tr "analytics_30d"}}</span>
-      <strong class="analytics-card-value">{{index .Extra "Total30d"}}</strong>
+    <article class="analytics-kpi__card">
+      <span class="analytics-kpi__label">{{tr .Tr "analytics_unique_repos"}}</span>
+      <strong class="analytics-kpi__value">{{index .Extra "UniqueRepos"}}</strong>
     </article>
-    <article class="analytics-card">
-      <span class="analytics-card-label">{{tr .Tr "analytics_unique_repos"}}</span>
-      <strong class="analytics-card-value">{{index .Extra "UniqueRepos"}}</strong>
-    </article>
-    <article class="analytics-card">
-      <span class="analytics-card-label">{{tr .Tr "analytics_unique_clients"}}</span>
-      <strong class="analytics-card-value">{{index .Extra "UniqueClients"}}</strong>
+    <article class="analytics-kpi__card">
+      <span class="analytics-kpi__label">{{tr .Tr "analytics_unique_clients"}}</span>
+      <strong class="analytics-kpi__value">{{index .Extra "UniqueClients"}}</strong>
     </article>
   </div>
 
-  <div class="analytics-grid">
+  <div class="analytics-row analytics-row--charts">
+    <section class="analytics-panel card analytics-chart-panel">
+      <div class="analytics-panel__head">
+        <h2>{{tr .Tr "analytics_daily"}}</h2>
+      </div>
+      <div class="analytics-chart" role="list">
+        {{range index .Extra "ByDay"}}
+        <div class="analytics-chart__row" role="listitem">
+          <span class="analytics-chart__label">{{.Day}}</span>
+          <div class="analytics-chart__track" aria-hidden="true">
+            <span class="analytics-chart__fill" style="width: {{barPct .Count $maxDay}}%"></span>
+          </div>
+          <span class="analytics-chart__value">{{.Count}}</span>
+        </div>
+        {{else}}
+        <p class="analytics-empty">{{tr .Tr "analytics_no_data"}}</p>
+        {{end}}
+      </div>
+    </section>
+
+    <section class="analytics-panel card analytics-chart-panel">
+      <div class="analytics-panel__head">
+        <h2>{{tr .Tr "analytics_hourly"}}</h2>
+      </div>
+      <div class="analytics-chart analytics-chart--compact" role="list">
+        {{range index .Extra "ByHour"}}
+        <div class="analytics-chart__row" role="listitem">
+          <span class="analytics-chart__label">{{.Day}}</span>
+          <div class="analytics-chart__track" aria-hidden="true">
+            <span class="analytics-chart__fill analytics-chart__fill--cool" style="width: {{barPct .Count $maxHour}}%"></span>
+          </div>
+          <span class="analytics-chart__value">{{.Count}}</span>
+        </div>
+        {{else}}
+        <p class="analytics-empty">{{tr .Tr "analytics_no_data"}}</p>
+        {{end}}
+      </div>
+    </section>
+  </div>
+
+  <div class="analytics-row">
+    <section class="analytics-panel card analytics-share-panel">
+      <div class="analytics-panel__head">
+        <h2>{{tr .Tr "analytics_private_share"}}</h2>
+        <p class="analytics-muted">{{tr .Tr "analytics_private_share_desc"}}</p>
+      </div>
+      <div class="analytics-share">
+        <div class="analytics-share__ring" style="--private-pct: {{index .Extra "PrivatePct"}}" aria-hidden="true"></div>
+        <ul class="analytics-share__legend">
+          <li>
+            <span class="analytics-share__dot analytics-share__dot--private"></span>
+            <span>{{tr .Tr "analytics_private"}}</span>
+            <strong>{{index .Extra "PrivatePct"}}%</strong>
+            <em>({{index .Extra "PrivateCount"}})</em>
+          </li>
+          <li>
+            <span class="analytics-share__dot analytics-share__dot--public"></span>
+            <span>{{tr .Tr "analytics_public"}}</span>
+            <strong>{{index .Extra "PublicPct"}}%</strong>
+            <em>({{index .Extra "PublicCount"}})</em>
+          </li>
+        </ul>
+      </div>
+    </section>
+
     <section class="analytics-panel card">
-      <h2>{{tr .Tr "analytics_private_share"}}</h2>
-      <p class="analytics-muted">{{tr .Tr "analytics_private_share_desc"}}</p>
-      <ul class="analytics-split">
-        <li><span>{{tr .Tr "analytics_private"}}</span> <strong>{{index .Extra "PrivatePct"}}%</strong> ({{index .Extra "PrivateCount"}})</li>
-        <li><span>{{tr .Tr "analytics_public"}}</span> <strong>{{index .Extra "PublicPct"}}%</strong> ({{index .Extra "PublicCount"}})</li>
+      <div class="analytics-panel__head">
+        <h2>{{tr .Tr "analytics_by_route"}}</h2>
+      </div>
+      <ul class="analytics-rank">
+        {{range $i, $row := index .Extra "TopRouteKinds"}}
+        <li class="analytics-rank__item">
+          <span class="analytics-rank__pos">{{add $i 1}}</span>
+          <code class="analytics-rank__label">{{$row.Label}}</code>
+          <span class="analytics-rank__count">{{$row.Count}}</span>
+        </li>
+        {{else}}
+        <li class="analytics-empty">{{tr .Tr "analytics_no_data"}}</li>
+        {{end}}
       </ul>
     </section>
+  </div>
 
+  <div class="analytics-row analytics-row--tops">
     <section class="analytics-panel card">
-      <h2>{{tr .Tr "analytics_by_route"}}</h2>
-      <table class="analytics-table">
-        <thead><tr><th>{{tr .Tr "analytics_label"}}</th><th>{{tr .Tr "analytics_count"}}</th></tr></thead>
-        <tbody>
-        {{range index .Extra "TopRouteKinds"}}
-          <tr><td><code>{{.Label}}</code></td><td>{{.Count}}</td></tr>
-        {{else}}
-          <tr><td colspan="2" class="analytics-empty">{{tr $.Tr "analytics_no_data"}}</td></tr>
-        {{end}}
-        </tbody>
-      </table>
+      <div class="analytics-panel__head"><h2>{{tr .Tr "analytics_top_repos"}}</h2></div>
+      <ul class="analytics-rank">
+        {{range $i, $row := index .Extra "TopRepos"}}
+        <li class="analytics-rank__item">
+          <span class="analytics-rank__pos">{{add $i 1}}</span>
+          <code class="analytics-rank__label">{{$row.Label}}</code>
+          <span class="analytics-rank__count">{{$row.Count}}</span>
+        </li>
+        {{else}}<li class="analytics-empty">{{tr .Tr "analytics_no_data"}}</li>{{end}}
+      </ul>
+    </section>
+    <section class="analytics-panel card">
+      <div class="analytics-panel__head"><h2>{{tr .Tr "analytics_top_artifacts"}}</h2></div>
+      <ul class="analytics-rank analytics-rank--wide">
+        {{range $i, $row := index .Extra "TopArtifacts"}}
+        <li class="analytics-rank__item">
+          <span class="analytics-rank__pos">{{add $i 1}}</span>
+          <span class="analytics-rank__label">{{$row.Label}}</span>
+          <span class="analytics-rank__count">{{$row.Count}}</span>
+        </li>
+        {{else}}<li class="analytics-empty">{{tr .Tr "analytics_no_data"}}</li>{{end}}
+      </ul>
+    </section>
+    <section class="analytics-panel card">
+      <div class="analytics-panel__head"><h2>{{tr .Tr "analytics_top_workflows"}}</h2></div>
+      <ul class="analytics-rank">
+        {{range $i, $row := index .Extra "TopWorkflows"}}
+        <li class="analytics-rank__item">
+          <span class="analytics-rank__pos">{{add $i 1}}</span>
+          <code class="analytics-rank__label">{{$row.Label}}</code>
+          <span class="analytics-rank__count">{{$row.Count}}</span>
+        </li>
+        {{else}}<li class="analytics-empty">{{tr .Tr "analytics_no_data"}}</li>{{end}}
+      </ul>
     </section>
   </div>
 
-  <section class="analytics-panel card">
-    <h2>{{tr .Tr "analytics_daily"}}</h2>
-    <table class="analytics-table analytics-bars">
-      <thead><tr><th>{{tr .Tr "analytics_day"}}</th><th>{{tr .Tr "analytics_count"}}</th><th></th></tr></thead>
-      <tbody>
-      {{$max := index .Extra "MaxDayCount"}}
-      {{range index .Extra "ByDay"}}
-        <tr>
-          <td>{{.Day}}</td>
-          <td>{{.Count}}</td>
-          <td class="analytics-bar-cell"><span class="analytics-bar" style="width: {{barPct .Count $max}}%"></span></td>
-        </tr>
-      {{else}}
-        <tr><td colspan="3" class="analytics-empty">{{tr .Tr "analytics_no_data"}}</td></tr>
-      {{end}}
-      </tbody>
-    </table>
-  </section>
-
-  <section class="analytics-panel card">
-    <h2>{{tr .Tr "analytics_hourly"}}</h2>
-    <table class="analytics-table analytics-bars">
-      <thead><tr><th>{{tr .Tr "analytics_hour"}}</th><th>{{tr .Tr "analytics_count"}}</th><th></th></tr></thead>
-      <tbody>
-      {{$maxH := index .Extra "MaxHourCount"}}
-      {{range index .Extra "ByHour"}}
-        <tr>
-          <td>{{.Day}}</td>
-          <td>{{.Count}}</td>
-          <td class="analytics-bar-cell"><span class="analytics-bar" style="width: {{barPct .Count $maxH}}%"></span></td>
-        </tr>
-      {{else}}
-        <tr><td colspan="3" class="analytics-empty">{{tr .Tr "analytics_no_data"}}</td></tr>
-      {{end}}
-      </tbody>
-    </table>
-  </section>
-
-  <div class="analytics-grid analytics-grid-3">
+  <div class="analytics-row">
     <section class="analytics-panel card">
-      <h2>{{tr .Tr "analytics_top_repos"}}</h2>
-      <table class="analytics-table">
-        <thead><tr><th>{{tr .Tr "analytics_label"}}</th><th>{{tr .Tr "analytics_count"}}</th></tr></thead>
-        <tbody>
-        {{range index .Extra "TopRepos"}}
-          <tr><td><code>{{.Label}}</code></td><td>{{.Count}}</td></tr>
-        {{else}}<tr><td colspan="2" class="analytics-empty">{{tr $.Tr "analytics_no_data"}}</td></tr>{{end}}
-        </tbody>
-      </table>
+      <div class="analytics-panel__head"><h2>{{tr .Tr "analytics_top_branches"}}</h2></div>
+      <ul class="analytics-rank">
+        {{range $i, $row := index .Extra "TopBranches"}}
+        <li class="analytics-rank__item">
+          <span class="analytics-rank__pos">{{add $i 1}}</span>
+          <code class="analytics-rank__label">{{$row.Label}}</code>
+          <span class="analytics-rank__count">{{$row.Count}}</span>
+        </li>
+        {{else}}<li class="analytics-empty">{{tr .Tr "analytics_no_data"}}</li>{{end}}
+      </ul>
     </section>
     <section class="analytics-panel card">
-      <h2>{{tr .Tr "analytics_top_artifacts"}}</h2>
-      <table class="analytics-table">
-        <thead><tr><th>{{tr .Tr "analytics_label"}}</th><th>{{tr .Tr "analytics_count"}}</th></tr></thead>
-        <tbody>
-        {{range index .Extra "TopArtifacts"}}
-          <tr><td>{{.Label}}</td><td>{{.Count}}</td></tr>
-        {{else}}<tr><td colspan="2" class="analytics-empty">{{tr $.Tr "analytics_no_data"}}</td></tr>{{end}}
-        </tbody>
-      </table>
-    </section>
-    <section class="analytics-panel card">
-      <h2>{{tr .Tr "analytics_top_workflows"}}</h2>
-      <table class="analytics-table">
-        <thead><tr><th>{{tr .Tr "analytics_label"}}</th><th>{{tr .Tr "analytics_count"}}</th></tr></thead>
-        <tbody>
-        {{range index .Extra "TopWorkflows"}}
-          <tr><td><code>{{.Label}}</code></td><td>{{.Count}}</td></tr>
-        {{else}}<tr><td colspan="2" class="analytics-empty">{{tr $.Tr "analytics_no_data"}}</td></tr>{{end}}
-        </tbody>
-      </table>
+      <div class="analytics-panel__head"><h2>{{tr .Tr "analytics_top_referers"}}</h2></div>
+      <ul class="analytics-rank analytics-rank--wide">
+        {{range $i, $row := index .Extra "TopReferers"}}
+        <li class="analytics-rank__item">
+          <span class="analytics-rank__pos">{{add $i 1}}</span>
+          <span class="analytics-rank__label analytics-rank__label--wrap">{{$row.Label}}</span>
+          <span class="analytics-rank__count">{{$row.Count}}</span>
+        </li>
+        {{else}}<li class="analytics-empty">{{tr .Tr "analytics_no_data"}}</li>{{end}}
+      </ul>
     </section>
   </div>
 
-  <div class="analytics-grid">
-    <section class="analytics-panel card">
-      <h2>{{tr .Tr "analytics_top_branches"}}</h2>
-      <table class="analytics-table">
-        <thead><tr><th>{{tr .Tr "analytics_label"}}</th><th>{{tr .Tr "analytics_count"}}</th></tr></thead>
-        <tbody>
-        {{range index .Extra "TopBranches"}}
-          <tr><td><code>{{.Label}}</code></td><td>{{.Count}}</td></tr>
-        {{else}}<tr><td colspan="2" class="analytics-empty">{{tr $.Tr "analytics_no_data"}}</td></tr>{{end}}
-        </tbody>
-      </table>
-    </section>
-    <section class="analytics-panel card">
-      <h2>{{tr .Tr "analytics_top_referers"}}</h2>
-      <table class="analytics-table">
-        <thead><tr><th>{{tr .Tr "analytics_label"}}</th><th>{{tr .Tr "analytics_count"}}</th></tr></thead>
-        <tbody>
-        {{range index .Extra "TopReferers"}}
-          <tr><td class="analytics-wrap">{{.Label}}</td><td>{{.Count}}</td></tr>
-        {{else}}<tr><td colspan="2" class="analytics-empty">{{tr $.Tr "analytics_no_data"}}</td></tr>{{end}}
-        </tbody>
-      </table>
-    </section>
-  </div>
-
-  <section class="analytics-panel card">
-    <h2>{{tr .Tr "analytics_recent"}}</h2>
+  <section class="analytics-panel card analytics-recent-panel">
+    <div class="analytics-panel__head">
+      <h2>{{tr .Tr "analytics_recent"}}</h2>
+    </div>
     <div class="analytics-scroll">
       <table class="analytics-table analytics-recent">
         <thead>
@@ -179,14 +220,16 @@
         <tbody>
         {{range index .Extra "Recent"}}
           <tr>
-            <td><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.CreatedAt.Format "2006-01-02 15:04"}}</time></td>
-            <td><code>{{.RouteKind}}</code></td>
-            <td><code>{{.Owner}}/{{.Repo}}</code></td>
-            <td>{{.ArtifactName}}</td>
-            <td>{{if .Workflow}}<code>{{.Workflow}}</code>{{else}}—{{end}}</td>
-            <td>{{if .Branch}}<code>{{.Branch}}</code>{{else}}—{{end}}</td>
-            <td>{{if .RunID}}{{.RunID}}{{else}}—{{end}}</td>
-            <td>{{if .PrivateLink}}{{tr $.Tr "analytics_yes"}}{{else}}{{tr $.Tr "analytics_no"}}{{end}}</td>
+            <td data-label="{{tr $.Tr "analytics_time"}}"><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.CreatedAt.Format "2006-01-02 15:04"}}</time></td>
+            <td data-label="{{tr $.Tr "analytics_route"}}"><span class="analytics-pill">{{.RouteKind}}</span></td>
+            <td data-label="{{tr $.Tr "analytics_repo"}}"><code>{{.Owner}}/{{.Repo}}</code></td>
+            <td data-label="{{tr $.Tr "analytics_artifact"}}">{{.ArtifactName}}</td>
+            <td data-label="{{tr $.Tr "analytics_workflow"}}">{{if .Workflow}}<code>{{.Workflow}}</code>{{else}}<span class="analytics-dash">—</span>{{end}}</td>
+            <td data-label="{{tr $.Tr "analytics_branch"}}">{{if .Branch}}<code>{{.Branch}}</code>{{else}}<span class="analytics-dash">—</span>{{end}}</td>
+            <td data-label="{{tr $.Tr "analytics_run"}}">{{if .RunID}}{{.RunID}}{{else}}<span class="analytics-dash">—</span>{{end}}</td>
+            <td data-label="{{tr $.Tr "analytics_private"}}">
+              {{if .PrivateLink}}<span class="analytics-pill analytics-pill--private">{{tr $.Tr "analytics_yes"}}</span>{{else}}<span class="analytics-pill analytics-pill--public">{{tr $.Tr "analytics_no"}}</span>{{end}}
+            </td>
           </tr>
         {{else}}
           <tr><td colspan="8" class="analytics-empty">{{tr .Tr "analytics_no_data"}}</td></tr>
@@ -196,6 +239,6 @@
     </div>
   </section>
 
-  <p class="analytics-footnote">{{tr .Tr "analytics_footnote"}}</p>
+  <footer class="analytics-footnote">{{tr .Tr "analytics_footnote"}}</footer>
 </section>
 {{end}}
