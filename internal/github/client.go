@@ -152,12 +152,12 @@ type Account struct {
 }
 
 type Repository struct {
-	FullName       string `json:"full_name"`
-	Name           string `json:"name"`
-	Owner          string
-	DefaultBranch  string `json:"default_branch"`
-	Private        bool   `json:"private"`
-	Fork           bool   `json:"fork"`
+	FullName      string `json:"full_name"`
+	Name          string `json:"name"`
+	Owner         string
+	DefaultBranch string `json:"default_branch"`
+	Private       bool   `json:"private"`
+	Fork          bool   `json:"fork"`
 }
 
 func (r *Repository) UnmarshalJSON(data []byte) error {

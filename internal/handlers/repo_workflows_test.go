@@ -10,7 +10,7 @@ import (
 func TestWorkflowShortName(t *testing.T) {
 	tests := map[string]string{
 		".github/workflows/binaries.yml": "binaries",
-		".github/workflows/ci.yaml":    "ci",
+		".github/workflows/ci.yaml":      "ci",
 		"build.yml":                      "build",
 	}
 	for path, want := range tests {

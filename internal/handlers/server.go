@@ -40,13 +40,13 @@ type ArtifactLink struct {
 
 func New(cfg config.Config, store *db.Store, ghApp *github.AppAuth, eng *render.Engine, bundle *i18n.Bundle) *Server {
 	return &Server{
-		cfg:       cfg,
-		store:     store,
-		ghApp:     ghApp,
-		render:    eng,
-		i18n:      bundle,
-		zipCache:  cache.NewTTLCache[string, string](1000, 50*time.Second),
-		logsCache: cache.NewTTLCache[string, string](1000, 50*time.Second),
+		cfg:        cfg,
+		store:      store,
+		ghApp:      ghApp,
+		render:     eng,
+		i18n:       bundle,
+		zipCache:   cache.NewTTLCache[string, string](1000, 50*time.Second),
+		logsCache:  cache.NewTTLCache[string, string](1000, 50*time.Second),
 		badgeCache: cache.NewTTLCache[string, badgeInfo](2000, 5*time.Minute),
 	}
 }
