@@ -43,6 +43,7 @@
   "repo_workflows_empty": "No active GitHub Actions workflows found for this repository.",
   "repo_workflows_badge_preview": "Latest build status (links to dawnl.ink artifacts)",
   "repo_workflows_badge_svg": "badge.svg",
+  "repo_workflows_badge_md": "README",
   "repo_workflows_badge_hint": "Paste the Markdown line into your README. The badge shows the latest run status; the link opens dawnl.ink artifacts for that workflow and default branch.",
   "artifact_list_title": "Choose an artifact",
   "artifact_access": "You can access this artifact by one of the following links, from least to most direct:",

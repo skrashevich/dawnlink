@@ -11,17 +11,22 @@
   <h3>{{tr .Tr "repo_workflows_title"}}</h3>
   {{$links := index .Extra "Links"}}
   {{if $links}}
-  <ul class="artifact-links workflow-list">
+  <ul class="workflow-list">
     {{range $links}}
     <li class="workflow-item">
-      <a class="workflow-item__main" href="{{.URL}}">{{.Title}}</a>
-      <div class="workflow-item__badge">
-        <a href="{{.BadgeTargetURL}}" title="{{tr $.Tr "repo_workflows_badge_preview"}}">
-          <img src="{{.BadgeURL}}" alt="" height="20" class="workflow-badge-img">
-        </a>
-        <a href="{{.BadgeURL}}" class="workflow-badge-link">{{tr $.Tr "repo_workflows_badge_svg"}}</a>
+      <div class="workflow-item__head">
+        <a class="workflow-item__main" href="{{.URL}}">{{.Title}}</a>
+        <div class="workflow-item__badge">
+          <a class="workflow-item__badge-preview" href="{{.BadgeTargetURL}}" title="{{tr $.Tr "repo_workflows_badge_preview"}}">
+            <img src="{{.BadgeURL}}" alt="" height="20" class="workflow-badge-img">
+          </a>
+          <a class="workflow-item__badge-svg" href="{{.BadgeURL}}">{{tr $.Tr "repo_workflows_badge_svg"}}</a>
+        </div>
       </div>
-      <pre class="workflow-badge-md"><code>{{.BadgeMarkdown}}</code></pre>
+      <div class="workflow-badge-md-wrap">
+        <span class="workflow-badge-md-label">{{tr $.Tr "repo_workflows_badge_md"}}</span>
+        <pre class="workflow-badge-md"><code>{{.BadgeMarkdown}}</code></pre>
+      </div>
     </li>
     {{end}}
   </ul>
