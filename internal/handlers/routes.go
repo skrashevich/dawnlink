@@ -260,58 +260,17 @@ func (s *Server) statusParam(r *http.Request) (string, error) {
 }
 
 func (s *Server) getLatestRun(owner, repo, workflow, branch, status string, token github.Token) (*github.WorkflowRun, error) {
-	type result struct {
-		run *github.WorkflowRun
-		err error
-	}
-	ch := make(chan result, 2)
-	events := []struct {
-		event string
-	}{
-		{"push"},
-		{"schedule"},
-	}
-	var wg sync.WaitGroup
-	for _, e := range events {
-		wg.Go(func() {
-			runs, err := github.ListWorkflowRuns(owner, repo, workflow, branch, e.event, status, token, 1)
-			if err != nil {
-				if github.IsNotFound(err) {
-					ch <- result{err: &httpError{status: 404, message: fmt.Sprintf("Repository '%s/%s' or workflow '%s' not found.", owner, repo, workflow)}}
-					return
-				}
-				ch <- result{err: err}
-				return
-			}
-			if len(runs) > 0 {
-				ch <- result{run: &runs[0]}
-			}
-		})
-	}
-	wg.Wait()
-	close(ch)
-	var runs []*github.WorkflowRun
-	for res := range ch {
-		if res.err != nil {
-			if he, ok := res.err.(*httpError); ok {
-				return nil, he
-			}
-			return nil, res.err
+	runs, err := github.ListWorkflowRuns(owner, repo, workflow, branch, "", status, token, 1)
+	if err != nil {
+		if github.IsNotFound(err) {
+			return nil, &httpError{status: 404, message: fmt.Sprintf("Repository '%s/%s' or workflow '%s' not found.", owner, repo, workflow)}
 		}
-		if res.run != nil {
-			runs = append(runs, res.run)
-		}
+		return nil, err
 	}
 	if len(runs) == 0 {
 		return nil, &httpError{status: 404, message: fmt.Sprintf("No successful runs for workflow '%s' branch '%s'.", workflow, branch)}
 	}
-	var best *github.WorkflowRun
-	for _, run := range runs {
-		if best == nil || run.UpdatedAt.After(best.UpdatedAt) {
-			best = run
-		}
-	}
-	return best, nil
+	return &runs[0], nil
 }
 
 func (s *Server) dashByBranch(w http.ResponseWriter, r *http.Request, owner, repo, workflow, branch string) error {

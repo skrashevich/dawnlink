@@ -90,6 +90,43 @@ func TestIsNotFoundUsesAPIStatus(t *testing.T) {
 	}
 }
 
+func TestListWorkflowRunsOmitsEmptyEvent(t *testing.T) {
+	withHTTPTransport(t, func(r *http.Request) *http.Response {
+		q := r.URL.Query()
+		if q.Has("event") {
+			t.Fatalf("event query param should be omitted, got %q", r.URL.RawQuery)
+		}
+		if got := q.Get("branch"); got != "main" {
+			t.Fatalf("branch = %q, want main", got)
+		}
+		if got := q.Get("status"); got != "success" {
+			t.Fatalf("status = %q, want success", got)
+		}
+		return jsonResponse(`{"workflow_runs":[{"id":1,"status":"completed","conclusion":"success"}]}`)
+	})
+
+	runs, err := ListWorkflowRuns("Owner", "Repo", "ci.yml", "main", "", "success", AppToken{JWT: "jwt"}, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 || runs[0].ID != 1 {
+		t.Fatalf("runs = %+v", runs)
+	}
+}
+
+func TestListWorkflowRunsIncludesEventWhenSet(t *testing.T) {
+	withHTTPTransport(t, func(r *http.Request) *http.Response {
+		if got := r.URL.Query().Get("event"); got != "push" {
+			t.Fatalf("event = %q, want push", got)
+		}
+		return jsonResponse(`{"workflow_runs":[]}`)
+	})
+
+	if _, err := ListWorkflowRuns("owner", "repo", "ci.yml", "main", "push", "", AppToken{JWT: "jwt"}, 1); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNextLinkFindsNonFirstRelation(t *testing.T) {
 	resp := &http.Response{Header: http.Header{
 		"Link": {`<https://api.github.com/items?page=1>; rel="prev", <https://api.github.com/items?page=3>; rel="next"`},

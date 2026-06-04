@@ -372,8 +372,10 @@ func ListWorkflowRuns(owner, repo, workflow, branch, event, status string, token
 	path := fmt.Sprintf("repos/%s/%s/actions/workflows/%s/runs", strings.ToLower(owner), strings.ToLower(repo), workflow)
 	params := url.Values{
 		"branch":   {branch},
-		"event":    {event},
 		"per_page": {strconv.Itoa(max)},
+	}
+	if event != "" {
+		params.Set("event", event)
 	}
 	if status != "" {
 		params.Set("status", status)
