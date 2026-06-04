@@ -37,7 +37,9 @@ Open http://localhost:8080/
 
 ## GitHub App
 
-Create an app with **Read-only** permissions for:
+The public app is [dawnl.ink](https://github.com/apps/dawnl-ink) (`dawnl-ink`).
+
+For self-hosting, create an app with **Read-only** permissions for:
 
 - Actions (workflows, runs, artifacts)
 - Metadata
@@ -59,7 +61,7 @@ To access public repositories where the app is not installed, set `FALLBACK_INST
 | `GITHUB_APP_ID` | Yes | GitHub App ID |
 | `GITHUB_PEM_FILENAME` | Yes | Path to the GitHub App private PEM key |
 | `APP_SECRET` | Yes | Random secret of at least 32 characters for private `?h=` links |
-| `GITHUB_APP_NAME` | No | App slug; defaults to `dawnlink` |
+| `GITHUB_APP_NAME` | No | App slug; defaults to `dawnl-ink` |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Together | OAuth dashboard for private repositories |
 | `FALLBACK_INSTALLATION_ID` | No | Installation token used for public repositories |
 | `PORT` | No | HTTP port; defaults to `8080` |

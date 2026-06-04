@@ -15,7 +15,7 @@ func TestValidate(t *testing.T) {
 		DefaultLocale: "ru",
 		DatabaseFile:  "db.sqlite",
 		Port:          "8080",
-		GitHubAppName: "dawnlink",
+		GitHubAppName: "dawnl-ink",
 	}
 	if err := valid.Validate(); err != nil {
 		t.Fatalf("valid config rejected: %v", err)

@@ -43,7 +43,7 @@ func Load() Config {
 		locale = "en"
 	}
 	return Config{
-		GitHubAppName:          envOr("GITHUB_APP_NAME", "dawnlink"),
+		GitHubAppName:          envOr("GITHUB_APP_NAME", "dawnl-ink"),
 		GitHubAppID:            appID,
 		GitHubClientID:         os.Getenv("GITHUB_CLIENT_ID"),
 		GitHubClientSecret:     os.Getenv("GITHUB_CLIENT_SECRET"),
