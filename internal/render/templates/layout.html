@@ -1,0 +1,39 @@
+{{define "layout.html"}}
+<!DOCTYPE html>
+<html lang="{{.Locale}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0c1018">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <title>{{if .Title}}{{.Title}} | {{end}}{{tr .Tr "site_title"}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{.BaseURL}}style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">{{tr .Tr "skip_to_content"}}</a>
+  <header class="top">
+    <a href="{{.BaseURL}}" class="logo"><img src="{{.BaseURL}}logo.svg" alt="dawn.link" width="148" height="32"></a>
+    <nav class="lang-switch" aria-label="{{tr .Tr "language_nav"}}">
+      {{range .LanguageLinks}}
+      <a href="{{.URL}}" {{if eq $.Locale .Language}}class="active" aria-current="true"{{end}}>{{if eq .Language "ru"}}{{tr $.Tr "lang_ru"}}{{else}}{{tr $.Tr "lang_en"}}{{end}}</a>
+      {{end}}
+    </nav>
+  </header>
+  {{if .Popup}}<p class="banner" role="status">{{tr .Tr "donation_banner"}}</p>{{end}}
+  <main id="main">
+    {{if eq .PageBlock "index_body"}}{{template "index_body" .}}{{end}}
+    {{if eq .PageBlock "dashboard_body"}}{{template "dashboard_body" .}}{{end}}
+    {{if eq .PageBlock "artifact_list_body"}}{{template "artifact_list_body" .}}{{end}}
+    {{if eq .PageBlock "artifact_body"}}{{template "artifact_body" .}}{{end}}
+    {{if eq .PageBlock "error_body"}}{{template "error_body" .}}{{end}}
+  </main>
+  <footer>
+    <a href="https://github.com/skrashevich/dawnlink">{{tr .Tr "footer_source"}}</a>
+  </footer>
+</body>
+</html>
+{{end}}

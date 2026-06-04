@@ -1,0 +1,17 @@
+{{define "artifact_list.html"}}{{template "layout.html" .}}{{end}}
+
+{{define "artifact_list_body"}}
+<section class="page-hero">
+  <h1>{{part (index .Extra "TitleParts") 0}}</h1>
+  <h2>{{part (index .Extra "TitleParts") 1}}</h2>
+  {{range index .Extra "Messages"}}<p class="warning" role="status">{{.}}</p>{{end}}
+</section>
+<section class="link-group">
+  <h3>{{tr .Tr "artifact_list_title"}}</h3>
+  <ul class="artifact-links">
+  {{range index .Extra "Links"}}
+    <li><a href="{{.URL}}">{{.Title}}</a></li>
+  {{end}}
+  </ul>
+</section>
+{{end}}

@@ -1,0 +1,6 @@
+/bin/
+/dawnlink
+*.sqlite
+.env
+private-key.pem
+*.pem

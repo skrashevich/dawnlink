@@ -1,0 +1,7 @@
+.git
+.env
+*.pem
+*.sqlite
+bin/
+dawnlink
+README.md

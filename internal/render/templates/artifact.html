@@ -1,0 +1,27 @@
+{{define "artifact.html"}}{{template "layout.html" .}}{{end}}
+
+{{define "artifact_body"}}
+<section class="page-hero">
+  <h1>{{part (index .Extra "TitleParts") 0}}</h1>
+  <h2>{{part (index .Extra "TitleParts") 1}}</h2>
+  <p class="muted">{{tr .Tr "artifact_access"}}</p>
+</section>
+<section class="link-group">
+  <h3>{{tr .Tr "github_pages"}}</h3>
+  <ul class="artifact-links">
+  {{range index .Extra "Links"}}
+    {{if .Ext}}
+    <li><a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Title}}<span class="link-badge">GitHub</span></a></li>
+    {{end}}
+  {{end}}
+  </ul>
+  <h3>{{tr .Tr "direct_links"}}</h3>
+  <ul class="direct-links">
+  {{range index .Extra "Links"}}
+    {{if not .Ext}}
+    <li><a href="{{.URL}}">{{.Title}}</a></li>
+    {{end}}
+  {{end}}
+  </ul>
+</section>
+{{end}}

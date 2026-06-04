@@ -1,0 +1,20 @@
+{{define "dashboard.html"}}{{template "layout.html" .}}{{end}}
+
+{{define "dashboard_body"}}
+<section class="page-hero">
+  <h1>{{tr .Tr "dashboard_title"}}</h1>
+  <p>{{tr .Tr "dashboard_desc"}}</p>
+</section>
+<section class="link-group">
+  <ul class="repo-list">
+  {{range index .Extra "Repos"}}
+    <li>{{.}}</li>
+  {{else}}
+    <li>{{tr .Tr "no_installations"}}</li>
+  {{end}}
+  </ul>
+  <p class="actions-row">
+    <a class="btn-secondary" href="{{index .Extra "ReconfigureURL"}}">{{tr .Tr "reconfigure"}}</a>
+  </p>
+</section>
+{{end}}

@@ -1,0 +1,77 @@
+package github
+
+import (
+	"errors"
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+)
+
+func TestExchangeOAuthCodeJSON(t *testing.T) {
+	withHTTPTransport(t, func(r *http.Request) *http.Response {
+		if got := r.Header.Get("Accept"); got != "application/json" {
+			t.Errorf("Accept = %q, want application/json", got)
+		}
+		return jsonResponse(`{"access_token":"token-value","token_type":"bearer"}`)
+	})
+
+	token, err := ExchangeOAuthCode("client", "secret", "code")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if token != "token-value" {
+		t.Fatalf("token = %q, want token-value", token)
+	}
+}
+
+func TestExchangeOAuthCodeRejectsMissingToken(t *testing.T) {
+	withHTTPTransport(t, func(r *http.Request) *http.Response {
+		return jsonResponse(`{}`)
+	})
+
+	if _, err := ExchangeOAuthCode("client", "secret", "code"); err == nil {
+		t.Fatal("expected missing-token error")
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
+
+func withHTTPTransport(t *testing.T, fn func(*http.Request) *http.Response) {
+	t.Helper()
+	oldClient := httpClient
+	httpClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		return fn(r), nil
+	})}
+	t.Cleanup(func() { httpClient = oldClient })
+}
+
+func jsonResponse(body string) *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": {"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(body)),
+	}
+}
+
+func TestIsNotFoundUsesAPIStatus(t *testing.T) {
+	if !IsNotFound(&APIError{Status: http.StatusNotFound}) {
+		t.Fatal("404 API error was not recognized")
+	}
+	if IsNotFound(errors.New("unrelated error containing 404")) {
+		t.Fatal("plain error was incorrectly recognized as not found")
+	}
+}
+
+func TestNextLinkFindsNonFirstRelation(t *testing.T) {
+	resp := &http.Response{Header: http.Header{
+		"Link": {`<https://api.github.com/items?page=1>; rel="prev", <https://api.github.com/items?page=3>; rel="next"`},
+	}}
+	if got := nextLink(resp); got != "https://api.github.com/items?page=3" {
+		t.Fatalf("nextLink() = %q", got)
+	}
+}

@@ -1,0 +1,70 @@
+{{define "index.html"}}{{template "layout.html" .}}{{end}}
+
+{{define "index_body"}}
+<section class="intro">
+  <p class="eyebrow">GitHub Actions</p>
+  <h1>{{tr .Tr "site_title"}}</h1>
+  <p>{{tr .Tr "site_tagline"}}</p>
+  <p class="muted">{{tr .Tr "public_note"}}</p>
+</section>
+<section class="controls">
+  <div class="auth-bar">
+    <a href="{{index .Extra "ReconfigureURL"}}">{{tr .Tr "install_app"}}</a>
+    {{if index .Extra "HasAuth"}}
+    <span aria-hidden="true">·</span>
+    <a href="{{index .Extra "AuthURL"}}">{{tr .Tr "authorize"}}</a>
+    <span class="muted">{{tr .Tr "optional_auth"}}</span>
+    {{end}}
+  </div>
+  <div class="card converter">
+    <h2>{{tr .Tr "paste_prompt"}}</h2>
+    <form method="get" action="{{.BaseURL}}" class="url-form">
+      <input type="url" name="url" id="url" placeholder="{{tr .Tr "url_placeholder"}}" autocomplete="url" spellcheck="false" required>
+      <button type="submit" id="get">{{tr .Tr "get_link"}}</button>
+    </form>
+    {{range .Messages}}<p class="message" role="alert">{{.}}</p>{{end}}
+  </div>
+  <p class="hint-block">
+  {{if index .Extra "HasMessages"}}
+    {{tr .Tr "check_formats"}}
+  {{else}}
+    {{tr .Tr "check_sections"}}
+  {{end}}
+  </p>
+  <div class="help-sections">
+    <details class="help-details" open>
+      <summary>{{tr .Tr "section_latest"}}</summary>
+      <div class="details-body">
+        <p>{{tr .Tr "section_latest_desc"}}</p>
+        <p class="muted">{{tr .Tr "branch_matters"}}</p>
+        <p>{{tr .Tr "status_param_hint"}}</p>
+        <p>{{tr .Tr "adapt_url_hint"}}</p>
+        <div class="example-pair">
+          <a href="{{index .Extra "ExampleWorkflow"}}">{{index .Extra "ExampleWorkflow"}}</a>
+          <span class="example-arrow" aria-hidden="true">→</span>
+          <a href="{{index .Extra "ExampleDest"}}">{{index .Extra "ExampleDest"}}</a>
+          <span class="muted"> [.zip]</span>
+        </div>
+      </div>
+    </details>
+    <details class="help-details">
+      <summary>{{tr .Tr "section_artifact"}}</summary>
+      <div class="details-body">
+        <p>{{tr .Tr "section_artifact_desc"}}</p>
+      </div>
+    </details>
+    <details class="help-details">
+      <summary>{{tr .Tr "section_run"}}</summary>
+      <div class="details-body">
+        <p>{{tr .Tr "section_run_desc"}}</p>
+      </div>
+    </details>
+    <details class="help-details">
+      <summary>{{tr .Tr "section_bot"}}</summary>
+      <div class="details-body">
+        <p>{{tr .Tr "section_bot_desc"}}</p>
+      </div>
+    </details>
+  </div>
+</section>
+{{end}}
