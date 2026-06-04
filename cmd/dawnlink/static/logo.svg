@@ -1,10 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 156 32" role="img" aria-label="dawnl.ink">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 32" fill="none" role="img" aria-label="dawnl.ink">
   <defs>
-    <linearGradient id="sun" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#e8a54b"/>
-      <stop offset="100%" stop-color="#f4c76a"/>
+    <linearGradient id="sun-core" x1="5" y1="19" x2="21" y2="5" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a86f24"/>
+      <stop stop-color="#e8a54b"/>
+      <stop stop-color="#f7d78a"/>
     </linearGradient>
+    <linearGradient id="sun-rays" x1="13" y1="1" x2="13" y2="11" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f4c76a" stop-opacity="0"/>
+      <stop stop-color="#f4c76a" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="ink-accent" x1="0" y1="0" x2="36" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5ec4e8"/>
+      <stop stop-color="#9ee4ff"/>
+    </linearGradient>
+    <radialGradient id="sun-halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(13 13) rotate(90) scale(11.5)">
+      <stop stop-color="#e8a54b" stop-opacity="0.32"/>
+      <stop stop-color="#e8a54b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft-light" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="0.7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  <circle cx="14" cy="16" r="9" fill="url(#sun)" opacity="0.95"/>
-  <text x="30" y="22" fill="#e8eef6" font-family="system-ui, sans-serif" font-size="17" font-weight="600" letter-spacing="-0.02em">dawnl.ink</text>
+
+  <g transform="translate(0, 4)">
+    <circle cx="13" cy="12.5" r="11.5" fill="url(#sun-halo)"/>
+    <path d="M13 2.5V5.5" stroke="url(#sun-rays)" stroke-width="1.65" stroke-linecap="round"/>
+    <path d="M6.4 5.4L8.1 7.5" stroke="url(#sun-rays)" stroke-width="1.65" stroke-linecap="round" opacity="0.88"/>
+    <path d="M19.6 5.4L17.9 7.5" stroke="url(#sun-rays)" stroke-width="1.65" stroke-linecap="round" opacity="0.88"/>
+    <path d="M4.8 12.5H7" stroke="url(#sun-rays)" stroke-width="1.35" stroke-linecap="round" opacity="0.42"/>
+    <path d="M21.2 12.5H19" stroke="url(#sun-rays)" stroke-width="1.35" stroke-linecap="round" opacity="0.42"/>
+    <path d="M4.8 17.75C4.8 13.18 8.43 9.55 13 9.55C17.57 9.55 21.2 13.18 21.2 17.75" fill="url(#sun-core)" filter="url(#soft-light)"/>
+    <path d="M2.8 18.35C5.65 16.45 9.45 16.45 13 18.35C16.55 20.25 20.35 20.25 23.2 18.35" stroke="#3d4f63" stroke-width="1.15" stroke-linecap="round"/>
+    <path d="M22.5 12.2C24.8 12.2 26.6 13.6 26.6 15.35C26.6 17.1 24.8 18.5 22.5 18.5" stroke="#5ec4e8" stroke-width="1.35" fill="none" stroke-linecap="round" opacity="0.95"/>
+    <path d="M25.8 15.35C25.8 13.6 27.6 12.2 29.9 12.2" stroke="#e8a54b" stroke-width="1.35" fill="none" stroke-linecap="round" opacity="0.95"/>
+    <circle cx="29.9" cy="12.2" r="1.35" fill="#9ee4ff"/>
+  </g>
+
+  <text x="36" y="22.5" font-family="Sora, ui-sans-serif, system-ui, sans-serif" font-size="15.5" font-weight="600" letter-spacing="-0.04em">
+    <tspan fill="#e8eef6">dawnl</tspan><tspan fill="url(#ink-accent)">.ink</tspan>
+  </text>
 </svg>
