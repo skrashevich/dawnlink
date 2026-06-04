@@ -30,7 +30,7 @@ func TestWorkflowBadgeLinks(t *testing.T) {
 	if !strings.Contains(target, "/skrashevich/enkapp/workflows/ci/main") {
 		t.Fatalf("target URL = %q", target)
 	}
-	if md != fmt.Sprintf("[![build](%s)](%s)", badge, target) {
+	if md != fmt.Sprintf("[![dawnl.ink](%s)](%s)", badge, target) {
 		t.Fatalf("markdown = %q", md)
 	}
 }

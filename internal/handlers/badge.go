@@ -20,7 +20,7 @@ type badgeInfo struct {
 
 func badgeFromRun(run *github.WorkflowRun, leftLabel string) badgeInfo {
 	if leftLabel == "" {
-		leftLabel = "build"
+		leftLabel = "dawnl.ink"
 	}
 	if run == nil {
 		return badgeInfo{
@@ -125,7 +125,7 @@ func (s *Server) badgeByBranch(w http.ResponseWriter, r *http.Request, owner, re
 	}
 	workflow = s.normalizeWorkflow(workflow)
 	label := badgeLabelParam(r)
-	cacheKey := fmt.Sprintf("badge:%s/%s/%s/%s/%s", strings.ToLower(owner), strings.ToLower(repo), workflow, branch, h)
+	cacheKey := fmt.Sprintf("badge:%s/%s/%s/%s/%s/%s", strings.ToLower(owner), strings.ToLower(repo), workflow, branch, h, label)
 
 	info, err := s.badgeCache.Get(cacheKey, func() (badgeInfo, error) {
 		run, runErr := s.getLatestRunAny(owner, repo, workflow, branch, token)

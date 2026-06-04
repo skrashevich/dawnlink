@@ -688,12 +688,17 @@ details.help-details .details-body p:last-child {
 
 .workflow-card__code {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
   max-height: 6rem;
   overflow: auto;
   overscroll-behavior: contain;
   padding: 0.7rem 0.8rem;
   font-size: 0.6875rem;
   line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -707,7 +712,7 @@ details.help-details .details-body p:last-child {
   min-width: 0;
   font-family: var(--font-mono);
   color: var(--fg-soft);
-  white-space: pre-wrap;
+  white-space: inherit;
   overflow-wrap: anywhere;
   word-break: break-word;
 }

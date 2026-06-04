@@ -27,7 +27,7 @@ func TestBadgeStatus(t *testing.T) {
 
 func TestBadgeFromRun(t *testing.T) {
 	info := badgeFromRun(&github.WorkflowRun{Status: "completed", Conclusion: "success"}, "")
-	if info.rightLabel != "passing" || info.leftLabel != "build" {
+	if info.rightLabel != "passing" || info.leftLabel != "dawnl.ink" {
 		t.Fatalf("badgeFromRun() = %+v", info)
 	}
 	info = badgeFromRun(nil, "ci")
