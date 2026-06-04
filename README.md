@@ -6,7 +6,7 @@ The service provides permanent public links to GitHub Actions artifacts without 
 
 ## Features
 
-- Home page: paste a GitHub link to redirect to a dawn.link URL
+- Home page: paste a GitHub link to redirect to a dawnl.ink URL
 - Latest artifact for a workflow and branch: `/{owner}/{repo}/workflows/{workflow}/{branch}/{artifact}`
 - Direct downloads: append `.zip` to the URL
 - Artifact list for a run: `/{owner}/{repo}/actions/runs/{run_id}`
