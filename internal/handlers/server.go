@@ -49,8 +49,17 @@ func New(cfg config.Config, store *db.Store, ghApp *github.AppAuth, eng *render.
 	}
 }
 
-func (s *Server) abs(path string) string {
-	return render.AbsURL(s.cfg.BaseURL, path)
+func (s *Server) baseURL(r *http.Request) string {
+	return s.cfg.BaseURLForRequest(r)
+}
+
+func (s *Server) abs(r *http.Request, path string) string {
+	return render.AbsURL(s.baseURL(r), path)
+}
+
+func (s *Server) renderPage(w http.ResponseWriter, r *http.Request, name string, data render.PageData) error {
+	data.BaseURL = s.baseURL(r)
+	return s.render.Page(w, r, name, data)
 }
 
 func (s *Server) locale(r *http.Request) string {
@@ -124,7 +133,7 @@ func (s *Server) serveError(w http.ResponseWriter, r *http.Request, err error) {
 	msg := template.HTMLEscapeString(he.message)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(he.status)
-	_ = s.render.Page(w, r, "error_page.html", render.PageData{
+	_ = s.renderPage(w, r, "error_page.html", render.PageData{
 		Title:     s.t(r, "error_not_found"),
 		PageBlock: "error_body",
 		Content:   template.HTML(msg),

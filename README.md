@@ -44,9 +44,9 @@ Create an app with **Read-only** permissions for:
 
 No webhook is required. Configure these GitHub App settings:
 
-- Homepage URL: the value of `URL`
-- Setup URL: `{URL}setup`
-- Callback URL: `{URL}dashboard`, when using the OAuth dashboard
+- Homepage URL: the value of `URL` (first URL when several are configured)
+- Setup URL: `{URL}setup` for each configured public URL
+- Callback URL: `{URL}dashboard` for each configured public URL, when using the OAuth dashboard
 
 After installation, GitHub calls the Setup URL with the `installation_id` parameter, and the service updates its list of available repositories.
 
@@ -63,7 +63,7 @@ To access public repositories where the app is not installed, set `FALLBACK_INST
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Together | OAuth dashboard for private repositories |
 | `FALLBACK_INSTALLATION_ID` | No | Installation token used for public repositories |
 | `PORT` | No | HTTP port; defaults to `8080` |
-| `URL` | No | Public absolute service URL; defaults to `http://localhost:{PORT}/` |
+| `URL` | No | Public absolute service URL, or comma-separated list of URLs; defaults to `http://localhost:{PORT}/`. The first URL is primary; links and OAuth redirects use the request host when it matches a configured URL |
 | `DATABASE_FILE` | No | SQLite database path; defaults to `./db.sqlite` |
 | `DEFAULT_LOCALE` | No | Fallback language, `en` or `ru`; defaults to `en` |
 
@@ -111,7 +111,7 @@ docker buildx build \
 
 BuildKit caches modules and the Go build cache between builds. The production image is based on `distroless/static-debian12:nonroot` and runs the process without root privileges.
 
-For production, set `URL` to a public HTTPS URL. Do not publish the `.env` file, PEM key, SQLite database, or links containing `h`.
+For production, set `URL` to a public HTTPS URL, or several comma-separated URLs if the service is reachable on multiple domains. Register each `{URL}setup` and `{URL}dashboard` in the GitHub App settings. Do not publish the `.env` file, PEM key, SQLite database, or links containing `h`.
 
 ## Verification
 

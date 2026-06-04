@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -18,6 +20,7 @@ type Config struct {
 	FallbackInstallationID int64
 	Port                   string
 	BaseURL                string
+	PublicURLs             []string
 	DatabaseFile           string
 	DefaultLocale          string
 }
@@ -29,13 +32,8 @@ func Load() Config {
 	if port == "" {
 		port = "8080"
 	}
-	baseURL := os.Getenv("URL")
-	if baseURL == "" {
-		baseURL = "http://localhost:" + port + "/"
-	}
-	if baseURL[len(baseURL)-1] != '/' {
-		baseURL += "/"
-	}
+	publicURLs := parsePublicURLs(os.Getenv("URL"), port)
+	baseURL := publicURLs[0]
 	db := os.Getenv("DATABASE_FILE")
 	if db == "" {
 		db = "./db.sqlite"
@@ -54,6 +52,7 @@ func Load() Config {
 		FallbackInstallationID: fallbackID,
 		Port:                   port,
 		BaseURL:                baseURL,
+		PublicURLs:             publicURLs,
 		DatabaseFile:           db,
 		DefaultLocale:          locale,
 	}
@@ -73,9 +72,11 @@ func (c Config) Validate() error {
 	if (c.GitHubClientID == "") != (c.GitHubClientSecret == "") {
 		problems = append(problems, "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be configured together")
 	}
-	base, err := url.Parse(c.BaseURL)
-	if err != nil || base.Scheme == "" || base.Host == "" {
-		problems = append(problems, "URL must be an absolute URL")
+	for i, raw := range c.PublicURLs {
+		base, err := url.Parse(raw)
+		if err != nil || base.Scheme == "" || base.Host == "" {
+			problems = append(problems, fmt.Sprintf("URL[%d] must be an absolute URL", i))
+		}
 	}
 	if len(problems) > 0 {
 		return fmt.Errorf("invalid configuration: %s", strings.Join(problems, "; "))
@@ -88,4 +89,69 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func parsePublicURLs(raw, port string) []string {
+	if raw == "" {
+		return []string{normalizeBaseURL("http://localhost:" + port + "/")}
+	}
+	parts := strings.Split(raw, ",")
+	urls := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		urls = append(urls, normalizeBaseURL(part))
+	}
+	if len(urls) == 0 {
+		return []string{normalizeBaseURL("http://localhost:" + port + "/")}
+	}
+	return urls
+}
+
+func normalizeBaseURL(raw string) string {
+	if !strings.HasSuffix(raw, "/") {
+		return raw + "/"
+	}
+	return raw
+}
+
+// BaseURLForRequest returns the configured public URL that matches the request
+// host, or the primary URL when no match is found.
+func (c Config) BaseURLForRequest(r *http.Request) string {
+	if r == nil {
+		return c.BaseURL
+	}
+	host := requestHost(r)
+	for _, u := range c.PublicURLs {
+		if publicURLHost(u) == host {
+			return u
+		}
+	}
+	return c.BaseURL
+}
+
+func requestHost(r *http.Request) string {
+	host := r.Host
+	if fwd := r.Header.Get("X-Forwarded-Host"); fwd != "" {
+		host = strings.TrimSpace(strings.Split(fwd, ",")[0])
+	}
+	return normalizeHost(host)
+}
+
+func publicURLHost(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	return normalizeHost(u.Host)
+}
+
+func normalizeHost(host string) string {
+	host = strings.ToLower(strings.TrimSpace(host))
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		return h
+	}
+	return host
 }

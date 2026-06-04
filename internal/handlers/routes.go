@@ -95,16 +95,15 @@ func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, messages []
 	extra := map[string]any{
 		"Messages":        messages,
 		"ExampleWorkflow": example.workflowURL,
-		"ExampleDest":     s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", example.owner, example.repo, example.workflow, example.branch, example.artifact)),
+		"ExampleDest":     s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", example.owner, example.repo, example.workflow, example.branch, example.artifact)),
 		"ExampleArtifact": example.artifact,
 		"ReconfigureURL":  fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
-		"AuthURL":         s.oauthURL(),
+		"AuthURL":         s.oauthURL(r),
 		"HasAuth":         s.cfg.GitHubClientID != "" && s.cfg.GitHubClientSecret != "",
 		"HasMessages":     len(messages) > 0,
 	}
-	return s.render.Page(w, r, "index.html", render.PageData{
-		Canonical: s.abs("/"),
-		Popup:     true,
+	return s.renderPage(w, r, "index.html", render.PageData{
+		Canonical: s.abs(r, "/"),
 		Messages:  messages,
 		PageBlock: "index_body",
 		Extra:     extra,
@@ -115,11 +114,11 @@ type workflowExample struct {
 	workflowURL, owner, repo, workflow, branch, artifact string
 }
 
-func (s *Server) oauthURL() string {
+func (s *Server) oauthURL(r *http.Request) string {
 	v := url.Values{
 		"client_id":    {s.cfg.GitHubClientID},
 		"scope":        {""},
-		"redirect_uri": {s.abs("/dashboard")},
+		"redirect_uri": {s.abs(r, "/dashboard")},
 	}
 	return "https://github.com/login/oauth/authorize?" + v.Encode()
 }
@@ -128,7 +127,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		w.Header().Set("X-Robots-Tag", "noindex")
-		return redirect(s.oauthURL(), http.StatusFound)
+		return redirect(s.oauthURL(r), http.StatusFound)
 	}
 	tokenStr, err := github.ExchangeOAuthCode(s.cfg.GitHubClientID, s.cfg.GitHubClientSecret, code)
 	if err != nil {
@@ -176,9 +175,9 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 		totalRepos += len(acc.PublicRepos) + len(acc.PrivateRepos)
 	}
 	w.Header().Set("X-Robots-Tag", "noindex")
-	return s.render.Page(w, r, "dashboard.html", render.PageData{
+	return s.renderPage(w, r, "dashboard.html", render.PageData{
 		Title:     s.t(r, "dashboard_title"),
-		Canonical: s.abs("/dashboard"),
+		Canonical: s.abs(r, "/dashboard"),
 		PageBlock: "dashboard_body",
 		Extra: map[string]any{
 			"Accounts":       accounts,
@@ -336,7 +335,7 @@ func (s *Server) dashByBranch(w http.ResponseWriter, r *http.Request, owner, rep
 		if o == "" {
 			o, n = owner, repo
 		}
-		u := s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", o, n, pathComponent(wfShort), pathComponent(branch), pathComponent(a.Name)))
+		u := s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", o, n, pathComponent(wfShort), pathComponent(branch), pathComponent(a.Name)))
 		u = artifactURL(u, h, status)
 		links = append(links, ArtifactLink{URL: u, Title: a.Name})
 	}
@@ -347,7 +346,7 @@ func (s *Server) dashByBranch(w http.ResponseWriter, r *http.Request, owner, rep
 	if len(links) == 1 && r.URL.Query().Get("preview") != "" {
 		messages = append(messages, s.t(r, "preview_hint"))
 	}
-	canonical := s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s", owner, repo, pathComponent(wfShort), pathComponent(branch)))
+	canonical := s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s", owner, repo, pathComponent(wfShort), pathComponent(branch)))
 	canonical = artifactURL(canonical, "", status)
 	return s.renderArtifactList(w, r, []string{fmt.Sprintf("%s/%s", owner, repo), fmt.Sprintf("Workflow %s | Branch %s", workflow, branch)}, canonical, links, messages)
 }
@@ -381,14 +380,14 @@ func (s *Server) dashByRun(w http.ResponseWriter, r *http.Request, owner, repo, 
 		if o == "" {
 			o, n = owner, repo
 		}
-		u := s.abs(fmt.Sprintf("/%s/%s/actions/runs/%d/%s", o, n, runID, pathComponent(a.Name)))
+		u := s.abs(r, fmt.Sprintf("/%s/%s/actions/runs/%d/%s", o, n, runID, pathComponent(a.Name)))
 		if h != "" {
 			u += "?h=" + url.QueryEscape(h)
 		}
 		links = append(links, ArtifactLink{URL: u, Title: a.Name})
 	}
 	sort.Slice(links, func(i, j int) bool { return links[i].Title < links[j].Title })
-	canonical := s.abs(fmt.Sprintf("/%s/%s/actions/runs/%d", owner, repo, runID))
+	canonical := s.abs(r, fmt.Sprintf("/%s/%s/actions/runs/%d", owner, repo, runID))
 	return s.renderArtifactList(w, r, []string{fmt.Sprintf("%s/%s", owner, repo), fmt.Sprintf("Run #%d", runID)}, canonical, links, nil)
 }
 
@@ -462,7 +461,7 @@ func (s *Server) byRunInternal(w http.ResponseWriter, r *http.Request, owner, re
 	if o != "" {
 		owner, repo = o, n
 	}
-	links, canonical, title, err := s.buildArtifactLinks(owner, repo, art.ID, checkSuiteID, h, zip)
+	links, canonical, title, err := s.buildArtifactLinks(r, owner, repo, art.ID, checkSuiteID, h, zip)
 	if err != nil {
 		return err
 	}
@@ -474,11 +473,11 @@ func (s *Server) byRunInternal(w http.ResponseWriter, r *http.Request, owner, re
 			Ext:   true,
 		})
 		links = append(links, ArtifactLink{
-			URL:   artifactURL(s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s/%s.zip", owner, repo, pathComponent(wfShort), pathComponent(branch), pathComponent(artifact))), "", status),
+			URL:   artifactURL(s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s.zip", owner, repo, pathComponent(wfShort), pathComponent(branch), pathComponent(artifact))), "", status),
 			Title: "stable_workflow",
 			H:     h,
 		})
-		canonical = s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", owner, repo, pathComponent(wfShort), pathComponent(branch), pathComponent(artifact)))
+		canonical = s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", owner, repo, pathComponent(wfShort), pathComponent(branch), pathComponent(artifact)))
 		canonical = artifactURL(canonical, "", status)
 		title = []string{fmt.Sprintf("%s/%s", owner, repo), fmt.Sprintf("Workflow %s | Branch %s | Artifact %s", workflow, branch, artifact)}
 	} else {
@@ -487,8 +486,8 @@ func (s *Server) byRunInternal(w http.ResponseWriter, r *http.Request, owner, re
 			Title: fmt.Sprintf(s.t(r, "view_run"), runID),
 			Ext:   true,
 		})
-		links = append(links, ArtifactLink{URL: s.abs(fmt.Sprintf("/%s/%s/actions/runs/%d/%s.zip", owner, repo, runID, pathComponent(artifact))), Title: "stable_run", H: h})
-		canonical = s.abs(fmt.Sprintf("/%s/%s/actions/runs/%d/%s", owner, repo, runID, pathComponent(artifact)))
+		links = append(links, ArtifactLink{URL: s.abs(r, fmt.Sprintf("/%s/%s/actions/runs/%d/%s.zip", owner, repo, runID, pathComponent(artifact))), Title: "stable_run", H: h})
+		canonical = s.abs(r, fmt.Sprintf("/%s/%s/actions/runs/%d/%s", owner, repo, runID, pathComponent(artifact)))
 		title = []string{fmt.Sprintf("%s/%s", owner, repo), fmt.Sprintf("Run #%d | Artifact %s", runID, artifact)}
 	}
 	return s.renderArtifactPage(w, r, title, canonical, links)
@@ -508,14 +507,14 @@ func (s *Server) byArtifact(w http.ResponseWriter, r *http.Request, owner, repo,
 		h = pw
 	}
 	checkSuite := int64(0)
-	links, canonical, title, err := s.buildArtifactLinks(owner, repo, artifactID, checkSuite, h, zip)
+	links, canonical, title, err := s.buildArtifactLinks(r, owner, repo, artifactID, checkSuite, h, zip)
 	if err != nil {
 		return err
 	}
 	return s.renderArtifactPage(w, r, title, canonical, links)
 }
 
-func (s *Server) buildArtifactLinks(owner, repo string, artifactID, checkSuiteID int64, h string, zip bool) ([]ArtifactLink, string, []string, error) {
+func (s *Server) buildArtifactLinks(r *http.Request, owner, repo string, artifactID, checkSuiteID int64, h string, zip bool) ([]ArtifactLink, string, []string, error) {
 	token, _, err := s.store.VerifiedToken(owner, repo, h)
 	if err != nil {
 		return nil, "", nil, &httpError{status: 404, message: err.Error()}
@@ -549,7 +548,7 @@ func (s *Server) buildArtifactLinks(owner, repo string, artifactID, checkSuiteID
 			Ext:   true,
 		})
 	}
-	canonical := s.abs(fmt.Sprintf("/%s/%s/actions/artifacts/%d", owner, repo, artifactID))
+	canonical := s.abs(r, fmt.Sprintf("/%s/%s/actions/artifacts/%d", owner, repo, artifactID))
 	links = append(links, ArtifactLink{URL: canonical + ".zip", Title: "stable_artifact", H: h})
 	title := []string{fmt.Sprintf("%s/%s", owner, repo), fmt.Sprintf("Artifact #%d", artifactID)}
 	return links, canonical, title, nil
@@ -584,7 +583,7 @@ func (s *Server) byJob(w http.ResponseWriter, r *http.Request, owner, repo, jobI
 	if txt {
 		return redirect(tmp, http.StatusFound)
 	}
-	canonical := s.abs(fmt.Sprintf("/%s/%s/runs/%d", owner, repo, jobID))
+	canonical := s.abs(r, fmt.Sprintf("/%s/%s/runs/%d", owner, repo, jobID))
 	links := []ArtifactLink{
 		{URL: canonical + ".txt", Title: "stable_logs", H: h},
 		{URL: tmp, Title: s.t(r, "ephemeral_logs")},
@@ -601,7 +600,7 @@ func githubActionsURL(owner, repo, event, branch, status string) string {
 }
 
 func (s *Server) renderArtifactList(w http.ResponseWriter, r *http.Request, titleParts []string, canonical string, links []ArtifactLink, messages []string) error {
-	return s.render.Page(w, r, "artifact_list.html", render.PageData{
+	return s.renderPage(w, r, "artifact_list.html", render.PageData{
 		Title:     strings.Join(titleParts, " | "),
 		Canonical: canonical,
 		PageBlock: "artifact_list_body",
@@ -628,14 +627,14 @@ func (s *Server) renderArtifactPage(w http.ResponseWriter, r *http.Request, titl
 			links[i].Title = s.t(r, key)
 		}
 		if !strings.HasPrefix(links[i].URL, "http") {
-			links[i].URL = s.abs(strings.TrimPrefix(links[i].URL, "/"))
+			links[i].URL = s.abs(r, strings.TrimPrefix(links[i].URL, "/"))
 		}
 		if links[i].H != "" {
 			links[i].URL = artifactURL(links[i].URL, links[i].H, "")
 		}
 	}
 	sort.SliceStable(links, func(i, j int) bool { return links[i].Ext && !links[j].Ext })
-	return s.render.Page(w, r, "artifact.html", render.PageData{
+	return s.renderPage(w, r, "artifact.html", render.PageData{
 		Title:     strings.Join(titleParts, " | "),
 		Canonical: canonical,
 		PageBlock: "artifact_body",

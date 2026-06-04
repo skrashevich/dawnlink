@@ -82,7 +82,9 @@ func (e *Engine) Page(w http.ResponseWriter, r *http.Request, name string, data 
 		u.RawQuery = q.Encode()
 		data.LanguageLinks = append(data.LanguageLinks, LanguageLink{Language: language, URL: u.String()})
 	}
-	data.BaseURL = e.baseURL
+	if data.BaseURL == "" {
+		data.BaseURL = e.baseURL
+	}
 	if data.Extra == nil {
 		data.Extra = make(map[string]any)
 	}
