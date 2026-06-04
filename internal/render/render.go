@@ -60,6 +60,7 @@ func New(bundle *i18n.Bundle, baseURL string) (*Engine, error) {
 			}
 			return ""
 		},
+		"lower": strings.ToLower,
 	}
 	t, err := template.New("").Funcs(funcs).ParseFS(templateFS, "templates/*.html")
 	if err != nil {

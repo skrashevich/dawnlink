@@ -133,4 +133,4 @@ A push to `main` publishes the `ghcr.io/{owner}/{repo}:latest` container and bin
 
 ## License
 
-AGPL-3.0, matching the original [oprypin/nightly.link](https://github.com/oprypin/nightly.link).
+AGPL-3.0

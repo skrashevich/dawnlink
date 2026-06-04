@@ -1,20 +1,108 @@
 {{define "dashboard.html"}}{{template "layout.html" .}}{{end}}
 
 {{define "dashboard_body"}}
-<section class="page-hero">
-  <h1>{{tr .Tr "dashboard_title"}}</h1>
-  <p>{{tr .Tr "dashboard_desc"}}</p>
-</section>
-<section class="link-group">
-  <ul class="repo-list">
-  {{range index .Extra "Repos"}}
-    <li>{{.}}</li>
-  {{else}}
-    <li>{{tr .Tr "no_installations"}}</li>
-  {{end}}
-  </ul>
-  <p class="actions-row">
+<section class="dashboard">
+  <header class="page-hero">
+    <h1>{{tr .Tr "dashboard_title"}}</h1>
+    <p>{{tr .Tr "dashboard_desc"}}</p>
+  </header>
+
+  {{$accounts := index .Extra "Accounts"}}
+  {{$total := index .Extra "TotalRepos"}}
+  {{if $accounts}}
+  <div class="dashboard-toolbar card">
+    <label class="dashboard-search" for="repo-search">
+      <span class="visually-hidden">{{tr .Tr "dashboard_search_label"}}</span>
+      <input type="search" id="repo-search" name="q" autocomplete="off" spellcheck="false"
+        placeholder="{{tr .Tr "dashboard_search_placeholder"}}">
+    </label>
+    <p class="dashboard-stats" id="repo-stats" data-total="{{$total}}" data-template="{{tr .Tr "dashboard_stats"}}" data-filtered="{{tr .Tr "dashboard_stats_filtered"}}"></p>
     <a class="btn-secondary" href="{{index .Extra "ReconfigureURL"}}">{{tr .Tr "reconfigure"}}</a>
-  </p>
+  </div>
+
+  <div class="dashboard-accounts" id="dashboard-accounts">
+    {{range $acc := $accounts}}
+    {{$pub := len $acc.PublicRepos}}
+    {{$priv := len $acc.PrivateRepos}}
+    <details class="dashboard-account card"{{if eq (len $accounts) 1}} open{{end}}>
+      <summary class="dashboard-account-summary">
+        <span class="dashboard-account-name">{{$acc.Owner}}</span>
+        <span class="dashboard-account-counts" data-public="{{$pub}}" data-private="{{$priv}}">
+          {{if $pub}}<span class="repo-count repo-count--public">{{$pub}} {{tr $.Tr "dashboard_public"}}</span>{{end}}
+          {{if $priv}}<span class="repo-count repo-count--private">{{$priv}} {{tr $.Tr "dashboard_private"}}</span>{{end}}
+        </span>
+      </summary>
+      <ul class="dashboard-repos" aria-label="{{$acc.Owner}}">
+        {{range $acc.PublicRepos}}
+        <li class="dashboard-repo" data-repo="{{lower .}}">
+          <a href="https://github.com/{{$acc.Owner}}/{{.}}">{{.}}</a>
+          <span class="repo-badge repo-badge--public">{{tr $.Tr "dashboard_public"}}</span>
+        </li>
+        {{end}}
+        {{range $acc.PrivateRepos}}
+        <li class="dashboard-repo" data-repo="{{lower .}}">
+          <a href="https://github.com/{{$acc.Owner}}/{{.}}">{{.}}</a>
+          <span class="repo-badge repo-badge--private">{{tr $.Tr "dashboard_private"}}</span>
+        </li>
+        {{end}}
+      </ul>
+    </details>
+    {{end}}
+  </div>
+
+  <p class="dashboard-empty-filter muted" id="dashboard-no-match" hidden>{{tr .Tr "dashboard_no_match"}}</p>
+
+  <script>
+  (function () {
+    const search = document.getElementById("repo-search");
+    const stats = document.getElementById("repo-stats");
+    const noMatch = document.getElementById("dashboard-no-match");
+    const accounts = document.querySelectorAll(".dashboard-account");
+    const total = Number(stats.dataset.total) || 0;
+    const tplAll = stats.dataset.template;
+    const tplFiltered = stats.dataset.filtered;
+
+    function format(tpl, n) {
+      return tpl.replace("%d", String(n));
+    }
+
+    function updateStats(visible) {
+      if (!search.value.trim()) {
+        stats.textContent = format(tplAll, total);
+      } else {
+        stats.textContent = format(tplFiltered, visible) + " · " + format(tplAll, total);
+      }
+    }
+
+    function filter() {
+      const q = search.value.trim().toLowerCase();
+      let visible = 0;
+      accounts.forEach(function (acc) {
+        let accVisible = 0;
+        acc.querySelectorAll(".dashboard-repo").forEach(function (li) {
+          const name = li.dataset.repo || "";
+          const match = !q || name.includes(q);
+          li.hidden = !match;
+          if (match) accVisible++;
+        });
+        acc.hidden = accVisible === 0;
+        visible += accVisible;
+      });
+      noMatch.hidden = visible > 0 || accounts.length === 0;
+      updateStats(visible);
+    }
+
+    updateStats(total);
+    search.addEventListener("input", filter);
+  })();
+  </script>
+  {{else}}
+  <div class="card dashboard-empty">
+    <p>{{tr .Tr "no_installations"}}</p>
+    <p class="actions-row">
+      <a class="btn-secondary" href="{{index .Extra "ReconfigureURL"}}">{{tr .Tr "reconfigure"}}</a>
+    </p>
+  </div>
+  {{end}}
 </section>
 {{end}}

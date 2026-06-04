@@ -89,12 +89,17 @@ func (d DelimitedSet) AnyMatch(fn func(string) bool) bool {
 }
 
 func (d DelimitedSet) String() string {
-	var parts []string
+	return strings.Join(d.Sorted(), ",")
+}
+
+// Sorted returns repository names in lexicographic order.
+func (d DelimitedSet) Sorted() []string {
+	parts := make([]string, 0, len(d.items))
 	for k := range d.items {
 		parts = append(parts, k)
 	}
 	sort.Strings(parts)
-	return strings.Join(parts, ",")
+	return parts
 }
 
 func (s *Store) Read(repoOwner string) (*RepoInstallation, error) {

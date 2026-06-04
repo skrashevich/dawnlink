@@ -89,8 +89,8 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) error {
 
 func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, messages []string) error {
 	example := workflowExample{
-		workflowURL: "https://github.com/oprypin/nightly.link/blob/master/.github/workflows/upload-test.yml",
-		owner:       "oprypin", repo: "nightly.link", workflow: "upload-test", branch: "master", artifact: "some-artifact",
+		workflowURL: "https://github.com/skrashevich/dawnlink/blob/main/.github/workflows/binaries.yml",
+		owner:       "skrashevich", repo: "dawnlink", workflow: "binaries", branch: "main", artifact: "dawnlink-linux-amd64",
 	}
 	extra := map[string]any{
 		"Messages":        messages,
@@ -142,7 +142,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	var repos []string
+	var accounts []dashboardAccount
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var firstErr error
@@ -154,8 +154,13 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 				errOnce.Do(func() { firstErr = err })
 				return
 			}
+			acc := dashboardAccount{
+				Owner:        ri.RepoOwner,
+				PublicRepos:  ri.PublicRepos.Sorted(),
+				PrivateRepos: ri.PrivateRepos.Sorted(),
+			}
 			mu.Lock()
-			repos = append(repos, fmt.Sprintf("%s — %s", ri.RepoOwner, ri.PublicRepos.String()))
+			accounts = append(accounts, acc)
 			mu.Unlock()
 		})
 	}
@@ -163,16 +168,30 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) error {
 	if firstErr != nil {
 		return firstErr
 	}
+	sort.Slice(accounts, func(i, j int) bool {
+		return strings.ToLower(accounts[i].Owner) < strings.ToLower(accounts[j].Owner)
+	})
+	totalRepos := 0
+	for _, acc := range accounts {
+		totalRepos += len(acc.PublicRepos) + len(acc.PrivateRepos)
+	}
 	w.Header().Set("X-Robots-Tag", "noindex")
 	return s.render.Page(w, r, "dashboard.html", render.PageData{
 		Title:     s.t(r, "dashboard_title"),
 		Canonical: s.abs("/dashboard"),
 		PageBlock: "dashboard_body",
 		Extra: map[string]any{
-			"Repos":          repos,
+			"Accounts":       accounts,
+			"TotalRepos":     totalRepos,
 			"ReconfigureURL": fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
 		},
 	})
+}
+
+type dashboardAccount struct {
+	Owner        string
+	PublicRepos  []string
+	PrivateRepos []string
 }
 
 func (s *Server) setup(w http.ResponseWriter, r *http.Request) error {
@@ -455,8 +474,9 @@ func (s *Server) byRunInternal(w http.ResponseWriter, r *http.Request, owner, re
 			Ext:   true,
 		})
 		links = append(links, ArtifactLink{
-			URL: artifactURL(s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s/%s.zip", owner, repo, pathComponent(wfShort), pathComponent(branch), pathComponent(artifact))), "", status),
-			H:   h,
+			URL:   artifactURL(s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s/%s.zip", owner, repo, pathComponent(wfShort), pathComponent(branch), pathComponent(artifact))), "", status),
+			Title: "stable_workflow",
+			H:     h,
 		})
 		canonical = s.abs(fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", owner, repo, pathComponent(wfShort), pathComponent(branch), pathComponent(artifact)))
 		canonical = artifactURL(canonical, "", status)
@@ -467,7 +487,7 @@ func (s *Server) byRunInternal(w http.ResponseWriter, r *http.Request, owner, re
 			Title: fmt.Sprintf(s.t(r, "view_run"), runID),
 			Ext:   true,
 		})
-		links = append(links, ArtifactLink{URL: s.abs(fmt.Sprintf("/%s/%s/actions/runs/%d/%s.zip", owner, repo, runID, pathComponent(artifact))), H: h})
+		links = append(links, ArtifactLink{URL: s.abs(fmt.Sprintf("/%s/%s/actions/runs/%d/%s.zip", owner, repo, runID, pathComponent(artifact))), Title: "stable_run", H: h})
 		canonical = s.abs(fmt.Sprintf("/%s/%s/actions/runs/%d/%s", owner, repo, runID, pathComponent(artifact)))
 		title = []string{fmt.Sprintf("%s/%s", owner, repo), fmt.Sprintf("Run #%d | Artifact %s", runID, artifact)}
 	}
@@ -530,7 +550,7 @@ func (s *Server) buildArtifactLinks(owner, repo string, artifactID, checkSuiteID
 		})
 	}
 	canonical := s.abs(fmt.Sprintf("/%s/%s/actions/artifacts/%d", owner, repo, artifactID))
-	links = append(links, ArtifactLink{URL: canonical + ".zip", H: h})
+	links = append(links, ArtifactLink{URL: canonical + ".zip", Title: "stable_artifact", H: h})
 	title := []string{fmt.Sprintf("%s/%s", owner, repo), fmt.Sprintf("Artifact #%d", artifactID)}
 	return links, canonical, title, nil
 }
@@ -566,7 +586,7 @@ func (s *Server) byJob(w http.ResponseWriter, r *http.Request, owner, repo, jobI
 	}
 	canonical := s.abs(fmt.Sprintf("/%s/%s/runs/%d", owner, repo, jobID))
 	links := []ArtifactLink{
-		{URL: canonical + ".txt", H: h},
+		{URL: canonical + ".txt", Title: "stable_logs", H: h},
 		{URL: tmp, Title: s.t(r, "ephemeral_logs")},
 		{URL: fmt.Sprintf("https://github.com/%s/%s/runs/%d", owner, repo, jobID), Title: fmt.Sprintf(s.t(r, "view_job"), jobID), Ext: true},
 	}
@@ -593,13 +613,19 @@ func (s *Server) renderArtifactList(w http.ResponseWriter, r *http.Request, titl
 	})
 }
 
+var artifactLinkTitles = map[string]string{
+	"ephemeral":       "ephemeral_link",
+	"github":          "github_login_required",
+	"stable_artifact": "stable_artifact_link",
+	"stable_workflow": "stable_workflow_link",
+	"stable_run":      "stable_run_link",
+	"stable_logs":     "stable_logs_link",
+}
+
 func (s *Server) renderArtifactPage(w http.ResponseWriter, r *http.Request, titleParts []string, canonical string, links []ArtifactLink) error {
 	for i := range links {
-		if links[i].Title == "ephemeral" {
-			links[i].Title = s.t(r, "ephemeral_link")
-		}
-		if links[i].Title == "github" {
-			links[i].Title = s.t(r, "github_login_required")
+		if key, ok := artifactLinkTitles[links[i].Title]; ok {
+			links[i].Title = s.t(r, key)
 		}
 		if !strings.HasPrefix(links[i].URL, "http") {
 			links[i].URL = s.abs(strings.TrimPrefix(links[i].URL, "/"))
