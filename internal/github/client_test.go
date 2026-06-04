@@ -1,12 +1,35 @@
 package github
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 )
+
+func TestRepositoryUnmarshalOwner(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		data string
+		want string
+	}{
+		{name: "object", data: `{"name":"repo","full_name":"owner/repo","owner":{"login":"owner"}}`, want: "owner"},
+		{name: "string", data: `{"name":"repo","full_name":"owner/repo","owner":"owner"}`, want: "owner"},
+		{name: "full name fallback", data: `{"name":"repo","full_name":"owner/repo"}`, want: "owner"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var repo Repository
+			if err := json.Unmarshal([]byte(tc.data), &repo); err != nil {
+				t.Fatal(err)
+			}
+			if repo.Owner != tc.want {
+				t.Fatalf("Owner = %q, want %q", repo.Owner, tc.want)
+			}
+		})
+	}
+}
 
 func TestExchangeOAuthCodeJSON(t *testing.T) {
 	withHTTPTransport(t, func(r *http.Request) *http.Response {

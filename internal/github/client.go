@@ -159,6 +159,39 @@ type Repository struct {
 	Fork     bool `json:"fork"`
 }
 
+func (r *Repository) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		FullName string          `json:"full_name"`
+		Name     string          `json:"name"`
+		Owner    json.RawMessage `json:"owner"`
+		Private  bool            `json:"private"`
+		Fork     bool            `json:"fork"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	r.FullName = raw.FullName
+	r.Name = raw.Name
+	r.Private = raw.Private
+	r.Fork = raw.Fork
+
+	if len(raw.Owner) > 0 && string(raw.Owner) != "null" {
+		if raw.Owner[0] == '"' {
+			if err := json.Unmarshal(raw.Owner, &r.Owner); err != nil {
+				return err
+			}
+		} else {
+			var owner Account
+			if err := json.Unmarshal(raw.Owner, &owner); err != nil {
+				return err
+			}
+			r.Owner = owner.Login
+		}
+	}
+	r.parseOwner()
+	return nil
+}
+
 func (r *Repository) parseOwner() {
 	if r.Owner == "" && strings.Contains(r.FullName, "/") {
 		r.Owner = strings.SplitN(r.FullName, "/", 2)[0]
