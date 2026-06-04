@@ -7,30 +7,66 @@
   <h2>{{tr .Tr "repo_workflows_subtitle"}}</h2>
   <p class="muted">{{tr .Tr "repo_workflows_branch"}} <code>{{index .Extra "Branch"}}</code> · <a href="{{index .Extra "GitHubURL"}}" rel="noopener noreferrer">GitHub</a></p>
 </section>
-<section class="link-group">
+<section class="link-group repo-workflows">
   <h3>{{tr .Tr "repo_workflows_title"}}</h3>
   {{$links := index .Extra "Links"}}
   {{if $links}}
-  <ul class="workflow-list">
-    {{range $links}}
-    <li class="workflow-item">
-      <div class="workflow-item__head">
-        <a class="workflow-item__main" href="{{.URL}}">{{.Title}}</a>
-        <div class="workflow-item__badge">
-          <a class="workflow-item__badge-preview" href="{{.BadgeTargetURL}}" title="{{tr $.Tr "repo_workflows_badge_preview"}}">
-            <img src="{{.BadgeURL}}" alt="" height="20" class="workflow-badge-img">
-          </a>
-          <a class="workflow-item__badge-svg" href="{{.BadgeURL}}">{{tr $.Tr "repo_workflows_badge_svg"}}</a>
+  <div class="workflow-cards">
+    {{range $i, $link := $links}}
+    <article class="workflow-card card">
+      <div class="workflow-card__top">
+        <div class="workflow-card__info">
+          <h4 class="workflow-card__name"><a href="{{$link.URL}}">{{$link.Title}}</a></h4>
+          <p class="workflow-card__path">{{$link.Path}}</p>
         </div>
+        <a class="workflow-card__badge" href="{{$link.BadgeTargetURL}}" title="{{tr $.Tr "repo_workflows_badge_preview"}}">
+          <img src="{{$link.BadgeURL}}" alt="" height="20" loading="lazy" decoding="async">
+        </a>
       </div>
-      <div class="workflow-badge-md-wrap">
-        <span class="workflow-badge-md-label">{{tr $.Tr "repo_workflows_badge_md"}}</span>
-        <pre class="workflow-badge-md"><code>{{.BadgeMarkdown}}</code></pre>
+      <div class="workflow-card__actions">
+        <a class="workflow-chip" href="{{$link.URL}}">{{tr $.Tr "repo_workflows_artifacts"}}</a>
+        <a class="workflow-chip workflow-chip--ghost" href="{{$link.BadgeURL}}">{{tr $.Tr "repo_workflows_badge_svg"}}</a>
       </div>
-    </li>
+      <div class="workflow-card__snippet">
+        <div class="workflow-card__snippet-bar">
+          <span class="workflow-card__snippet-label">{{tr $.Tr "repo_workflows_badge_md"}}</span>
+          <button type="button" class="btn-copy" data-copy-target="workflow-md-{{$i}}" data-copied-label="{{tr $.Tr "repo_workflows_copied"}}">{{tr $.Tr "repo_workflows_copy"}}</button>
+        </div>
+        <pre id="workflow-md-{{$i}}" class="workflow-card__code" tabindex="0"><code>{{$link.BadgeMarkdown}}</code></pre>
+      </div>
+    </article>
     {{end}}
-  </ul>
-  <p class="muted workflow-badge-hint">{{tr .Tr "repo_workflows_badge_hint"}}</p>
+  </div>
+  <p class="repo-workflows__hint">{{tr .Tr "repo_workflows_badge_hint"}}</p>
+  <script>
+  (function () {
+    document.querySelectorAll(".repo-workflows .btn-copy").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-copy-target");
+        var block = id ? document.getElementById(id) : null;
+        if (!block) return;
+        var text = block.textContent || "";
+        var copied = btn.getAttribute("data-copied-label") || "Copied";
+        function ok() {
+          btn.classList.add("is-copied");
+          btn.textContent = copied;
+          window.setTimeout(function () {
+            btn.classList.remove("is-copied");
+            btn.textContent = btn.getAttribute("data-copy-label") || btn.dataset.copyLabel || "Copy";
+          }, 1600);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok).catch(function () {
+            window.prompt("", text);
+          });
+        } else {
+          window.prompt("", text);
+        }
+      });
+      btn.setAttribute("data-copy-label", btn.textContent);
+    });
+  })();
+  </script>
   {{else}}
   <p class="muted">{{tr .Tr "repo_workflows_empty"}}</p>
   {{end}}

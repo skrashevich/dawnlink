@@ -518,131 +518,209 @@ details.help-details .details-body p:last-child {
   word-break: break-all;
 }
 
-.workflow-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* Repository workflow picker */
+.repo-workflows .workflow-cards {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 100%;
-}
-
-.workflow-list > .workflow-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  min-width: 0;
-  max-width: 100%;
-  padding: 0.85rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.workflow-item__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem 1rem;
+  gap: 1rem;
   min-width: 0;
 }
 
-.workflow-list a.workflow-item__main {
-  display: inline;
-  padding: 0;
+.workflow-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 1.1rem 1.2rem;
+}
+
+.workflow-card__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.85rem 1rem;
+  min-width: 0;
+}
+
+.workflow-card__info {
+  min-width: 0;
+}
+
+.workflow-card__name {
   margin: 0;
-  background: none;
-  border: none;
-  border-radius: 0;
-  font-family: var(--font-ui);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--link);
+  line-height: 1.35;
+}
+
+.workflow-card__name a {
+  color: var(--fg);
   text-decoration: none;
+}
+
+.workflow-card__name a:hover {
+  color: var(--link-hover);
+}
+
+.workflow-card__path {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--muted);
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.workflow-list a.workflow-item__main:hover {
-  color: var(--link-hover);
-  background: none;
-  transform: none;
-}
-
-.workflow-item__badge {
-  display: flex;
+.workflow-card__badge {
   flex-shrink: 0;
-  flex-wrap: wrap;
+  display: flex;
   align-items: center;
-  gap: 0.5rem 0.75rem;
-}
-
-.workflow-list .workflow-item__badge a {
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 0;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--muted);
+  justify-content: center;
+  padding: 0.4rem 0.55rem;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   text-decoration: none;
-  transition: color 0.15s;
+  line-height: 0;
+  transition: border-color 0.2s var(--ease-out);
 }
 
-.workflow-list .workflow-item__badge a:hover {
-  color: var(--link-hover);
-  background: none;
-  transform: none;
+.workflow-card__badge:hover {
+  border-color: var(--border-bright);
 }
 
-.workflow-badge-img {
+.workflow-card__badge img {
   display: block;
   height: 20px;
   width: auto;
-  max-width: 100%;
+  max-width: min(10rem, 100%);
 }
 
-.workflow-badge-md-wrap {
+.workflow-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.workflow-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--link);
+  background: rgba(94, 196, 232, 0.1);
+  border: 1px solid rgba(94, 196, 232, 0.28);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.workflow-chip:hover {
+  color: var(--link-hover);
+  border-color: var(--link);
+  background: rgba(94, 196, 232, 0.16);
+}
+
+.workflow-chip--ghost {
+  color: var(--muted);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.workflow-chip--ghost:hover {
+  color: var(--fg-soft);
+  border-color: var(--border-bright);
+  background: var(--surface-raised);
+}
+
+.workflow-card__snippet {
   min-width: 0;
-  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-deep);
 }
 
-.workflow-badge-md-label {
-  display: block;
-  margin-bottom: 0.35rem;
+.workflow-card__snippet-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+
+.workflow-card__snippet-label {
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.workflow-badge-md {
-  margin: 0;
-  max-width: 100%;
-  padding: 0.55rem 0.65rem;
-  background: var(--bg);
+.repo-workflows .btn-copy {
+  padding: 0.2rem 0.6rem;
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--fg-soft);
+  background: transparent;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow-x: auto;
-  font-size: 0.75rem;
-  line-height: 1.45;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
 }
 
-.workflow-badge-md code {
+.repo-workflows .btn-copy:hover {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.repo-workflows .btn-copy.is-copied {
+  color: var(--success);
+  border-color: rgba(61, 155, 106, 0.55);
+}
+
+.workflow-card__code {
+  margin: 0;
+  max-height: 6rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.6875rem;
+  line-height: 1.55;
+  -webkit-overflow-scrolling: touch;
+}
+
+.workflow-card__code:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.workflow-card__code code {
   display: block;
+  min-width: 0;
+  font-family: var(--font-mono);
+  color: var(--fg-soft);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
-  font-family: var(--font-mono);
-  color: var(--fg-soft);
 }
 
-.workflow-badge-hint {
-  margin-top: 0.75rem;
+.repo-workflows__hint {
+  margin: 1.15rem 0 0;
+  padding: 0.8rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--fg-soft);
+  background: var(--warning-bg);
+  border: 1px solid rgba(232, 165, 75, 0.22);
+  border-radius: var(--radius);
 }
 
 .example-arrow {
