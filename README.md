@@ -1,6 +1,6 @@
 # dawnlink
 
-A self-hosted Go service inspired by [nightly.link](https://nightly.link), with Russian and English interface localization.
+A self-hosted Go service inspired by [dawnl.ink](https://dawnl.ink), with Russian and English interface localization.
 
 The service provides permanent public links to GitHub Actions artifacts without requiring visitors to sign in to GitHub.
 
