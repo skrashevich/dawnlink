@@ -102,7 +102,7 @@ func workflowBadgeLinks(s *Server, r *http.Request, owner, repo, workflow, branc
 		targetURL = artifactURL(targetURL, h, "")
 		badgeURL = artifactURL(badgeURL, h, "")
 	}
-	markdown = fmt.Sprintf("[![dawnl.ink](%s)](%s)", badgeURL, targetURL)
+	markdown = fmt.Sprintf("[![%s](%s)](%s)", s.cfg.PrimaryDomain(), badgeURL, targetURL)
 	return badgeURL, targetURL, markdown
 }
 

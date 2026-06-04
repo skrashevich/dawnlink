@@ -17,9 +17,9 @@ type badgeInfo struct {
 	title      string
 }
 
-func badgeFromRun(run *github.WorkflowRun, leftLabel string) badgeInfo {
+func badgeFromRun(run *github.WorkflowRun, leftLabel, defaultLabel string) badgeInfo {
 	if leftLabel == "" {
-		leftLabel = "dawnl.ink"
+		leftLabel = defaultLabel
 	}
 	if run == nil {
 		return badgeInfo{
@@ -117,7 +117,7 @@ func (s *Server) badgeByBranch(w http.ResponseWriter, r *http.Request, owner, re
 	h := r.URL.Query().Get("h")
 	token, pw, err := s.store.VerifiedToken(owner, repo, h)
 	if err != nil {
-		return s.serveBadge(w, badgeFromRun(nil, badgeLabelParam(r)))
+		return s.serveBadge(w, badgeFromRun(nil, badgeLabelParam(r), s.cfg.PrimaryDomain()))
 	}
 	if pw != "" {
 		h = pw
@@ -130,14 +130,14 @@ func (s *Server) badgeByBranch(w http.ResponseWriter, r *http.Request, owner, re
 		run, runErr := s.getLatestRunAny(owner, repo, workflow, branch, token)
 		if runErr != nil {
 			if he, ok := runErr.(*httpError); ok && he.status == 404 {
-				return badgeFromRun(nil, label), nil
+				return badgeFromRun(nil, label, s.cfg.PrimaryDomain()), nil
 			}
 			return badgeInfo{}, runErr
 		}
-		return badgeFromRun(run, label), nil
+		return badgeFromRun(run, label, s.cfg.PrimaryDomain()), nil
 	})
 	if err != nil {
-		return s.serveBadge(w, badgeFromRun(nil, label))
+		return s.serveBadge(w, badgeFromRun(nil, label, s.cfg.PrimaryDomain()))
 	}
 
 	w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")

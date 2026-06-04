@@ -9,7 +9,7 @@ import (
 )
 
 func TestIndexPage(t *testing.T) {
-	b, err := i18n.Load("ru")
+	b, err := i18n.Load("ru", "localhost")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestIndexPage(t *testing.T) {
 }
 
 func TestLanguageLinksPreserveQuery(t *testing.T) {
-	b, err := i18n.Load("ru")
+	b, err := i18n.Load("ru", "localhost")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/skrashevich/dawnlink/internal/i18n"
@@ -28,6 +29,7 @@ type PageData struct {
 	Content       template.HTML
 	LanguageLinks []LanguageLink
 	BaseURL       string
+	SiteDomain    string
 	PageBlock     string
 	Extra         map[string]any
 }
@@ -109,11 +111,22 @@ func (e *Engine) Page(w http.ResponseWriter, r *http.Request, name string, data 
 	if data.BaseURL == "" {
 		data.BaseURL = e.baseURL
 	}
+	if data.SiteDomain == "" {
+		data.SiteDomain = domainFromURL(e.baseURL)
+	}
 	if data.Extra == nil {
 		data.Extra = make(map[string]any)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	return e.templates.ExecuteTemplate(w, name, data)
+}
+
+func domainFromURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	return u.Hostname()
 }
 
 func AbsURL(base, path string) string {

@@ -6,7 +6,7 @@ The service provides permanent public links to GitHub Actions artifacts without 
 
 ## Features
 
-- Home page: paste a GitHub link to redirect to a dawnl.ink URL
+- Home page: paste a GitHub link to redirect to the configured service URL
 - Latest artifact for a workflow and branch: `/{owner}/{repo}/workflows/{workflow}/{branch}/{artifact}`
 - Direct downloads: append `.zip` to the URL
 - Artifact list for a run: `/{owner}/{repo}/actions/runs/{run_id}`
@@ -37,7 +37,7 @@ Open http://localhost:8080/
 
 ## GitHub App
 
-The public app is [dawnl.ink](https://github.com/apps/dawnl-ink) (`dawnl-ink`).
+The default public GitHub App slug is [`dawnl-ink`](https://github.com/apps/dawnl-ink).
 
 For self-hosting, create an app with **Read-only** permissions for:
 
@@ -94,7 +94,7 @@ Workflow names without an extension automatically receive the `.yml` extension. 
 
 ### README badge
 
-Open `https://dawnl.ink/owner/repo` to see per-workflow badge URLs and ready-to-paste Markdown. Badge endpoint: `/owner/repo/workflows/{workflow}/{branch}/badge.svg` (optional `?label=` and `?h=` for private repos).
+Open `{URL}owner/repo` to see per-workflow badge URLs and ready-to-paste Markdown. Badge endpoint: `/owner/repo/workflows/{workflow}/{branch}/badge.svg` (optional `?label=` and `?h=` for private repos).
 
 ## Docker
 

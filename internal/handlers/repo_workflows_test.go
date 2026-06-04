@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/skrashevich/dawnlink/internal/config"
 )
 
 func TestWorkflowShortName(t *testing.T) {
@@ -21,8 +23,8 @@ func TestWorkflowShortName(t *testing.T) {
 }
 
 func TestWorkflowBadgeLinks(t *testing.T) {
-	s := &Server{}
-	r, _ := http.NewRequest(http.MethodGet, "https://dawnl.ink/skrashevich/enkapp", nil)
+	s := &Server{cfg: config.Config{BaseURL: "https://primary.example/"}}
+	r, _ := http.NewRequest(http.MethodGet, "https://primary.example/skrashevich/enkapp", nil)
 	badge, target, md := workflowBadgeLinks(s, r, "skrashevich", "enkapp", "ci", "main", "")
 	if !strings.Contains(badge, "/skrashevich/enkapp/workflows/ci/main/badge.svg") {
 		t.Fatalf("badge URL = %q", badge)
@@ -30,7 +32,7 @@ func TestWorkflowBadgeLinks(t *testing.T) {
 	if !strings.Contains(target, "/skrashevich/enkapp/workflows/ci/main") {
 		t.Fatalf("target URL = %q", target)
 	}
-	if md != fmt.Sprintf("[![dawnl.ink](%s)](%s)", badge, target) {
+	if md != fmt.Sprintf("[![primary.example](%s)](%s)", badge, target) {
 		t.Fatalf("markdown = %q", md)
 	}
 }

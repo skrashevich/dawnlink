@@ -19,7 +19,7 @@ type Bundle struct {
 	defaults string
 }
 
-func Load(defaultLocale string) (*Bundle, error) {
+func Load(defaultLocale, domain string) (*Bundle, error) {
 	b := &Bundle{
 		messages: make(map[string]map[string]string),
 		defaults: defaultLocale,
@@ -40,6 +40,9 @@ func Load(defaultLocale string) (*Bundle, error) {
 		var m map[string]string
 		if err := json.Unmarshal(data, &m); err != nil {
 			return nil, err
+		}
+		for key, message := range m {
+			m[key] = strings.ReplaceAll(message, "{{domain}}", domain)
 		}
 		b.messages[lang] = m
 	}

@@ -149,6 +149,19 @@ func normalizeBaseURL(raw string) string {
 	return raw
 }
 
+// PrimaryDomain returns the hostname of the first configured public URL.
+func (c Config) PrimaryDomain() string {
+	raw := c.BaseURL
+	if len(c.PublicURLs) > 0 {
+		raw = c.PublicURLs[0]
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	return u.Hostname()
+}
+
 // BaseURLForRequest returns the configured public URL that matches the request
 // host, or the primary URL when no match is found.
 func (c Config) BaseURLForRequest(r *http.Request) string {

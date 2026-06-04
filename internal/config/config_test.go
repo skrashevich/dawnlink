@@ -83,40 +83,50 @@ func TestEnvBool(t *testing.T) {
 }
 
 func TestParsePublicURLs(t *testing.T) {
-	urls := parsePublicURLs("https://dawnl.ink/, https://dawnl.ink/", "8080")
+	urls := parsePublicURLs("https://primary.example/, https://secondary.example/", "8080")
 	if len(urls) != 2 {
 		t.Fatalf("len(urls) = %d, want 2", len(urls))
 	}
-	if urls[0] != "https://dawnl.ink/" {
+	if urls[0] != "https://primary.example/" {
 		t.Fatalf("primary URL = %q", urls[0])
 	}
-	if urls[1] != "https://dawnl.ink/" {
+	if urls[1] != "https://secondary.example/" {
 		t.Fatalf("secondary URL = %q", urls[1])
+	}
+}
+
+func TestPrimaryDomainUsesFirstPublicURL(t *testing.T) {
+	cfg := Config{
+		BaseURL:    "https://fallback.example/",
+		PublicURLs: []string{"https://primary.example:8443/", "https://secondary.example/"},
+	}
+	if got := cfg.PrimaryDomain(); got != "primary.example" {
+		t.Fatalf("PrimaryDomain() = %q, want primary.example", got)
 	}
 }
 
 func TestBaseURLForRequest(t *testing.T) {
 	cfg := Config{
-		BaseURL:    "https://dawnl.ink/",
-		PublicURLs: []string{"https://dawnl.ink/", "https://dawnl.ink/"},
+		BaseURL:    "https://primary.example/",
+		PublicURLs: []string{"https://primary.example/", "https://secondary.example/"},
 	}
 
-	r := httptest.NewRequest("GET", "https://dawnl.ink/owner/repo", nil)
-	r.Host = "dawnl.ink"
-	if got := cfg.BaseURLForRequest(r); got != "https://dawnl.ink/" {
-		t.Fatalf("BaseURLForRequest = %q, want https://dawnl.ink/", got)
+	r := httptest.NewRequest("GET", "https://secondary.example/owner/repo", nil)
+	r.Host = "secondary.example"
+	if got := cfg.BaseURLForRequest(r); got != "https://secondary.example/" {
+		t.Fatalf("BaseURLForRequest = %q, want https://secondary.example/", got)
 	}
 
 	r = httptest.NewRequest("GET", "https://unknown.example/", nil)
 	r.Host = "unknown.example"
-	if got := cfg.BaseURLForRequest(r); got != "https://dawnl.ink/" {
+	if got := cfg.BaseURLForRequest(r); got != "https://primary.example/" {
 		t.Fatalf("unknown host fallback = %q, want primary URL", got)
 	}
 
-	r = httptest.NewRequest("GET", "https://dawnl.ink/", nil)
-	r.Host = "dawnl.ink"
-	r.Header.Set("X-Forwarded-Host", "dawnl.ink")
-	if got := cfg.BaseURLForRequest(r); got != "https://dawnl.ink/" {
-		t.Fatalf("forwarded host = %q, want https://dawnl.ink/", got)
+	r = httptest.NewRequest("GET", "https://primary.example/", nil)
+	r.Host = "primary.example"
+	r.Header.Set("X-Forwarded-Host", "secondary.example")
+	if got := cfg.BaseURLForRequest(r); got != "https://secondary.example/" {
+		t.Fatalf("forwarded host = %q, want https://secondary.example/", got)
 	}
 }

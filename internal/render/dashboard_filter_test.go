@@ -20,7 +20,7 @@ type dashAccount struct {
 }
 
 func TestDashboardRendersRepoFilterAttribute(t *testing.T) {
-	b, err := i18n.Load("en")
+	b, err := i18n.Load("en", "localhost")
 	if err != nil {
 		t.Fatal(err)
 	}

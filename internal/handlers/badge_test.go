@@ -26,11 +26,11 @@ func TestBadgeStatus(t *testing.T) {
 }
 
 func TestBadgeFromRun(t *testing.T) {
-	info := badgeFromRun(&github.WorkflowRun{Status: "completed", Conclusion: "success"}, "")
-	if info.rightLabel != "passing" || info.leftLabel != "dawnl.ink" {
+	info := badgeFromRun(&github.WorkflowRun{Status: "completed", Conclusion: "success"}, "", "downloads.example")
+	if info.rightLabel != "passing" || info.leftLabel != "downloads.example" {
 		t.Fatalf("badgeFromRun() = %+v", info)
 	}
-	info = badgeFromRun(nil, "ci")
+	info = badgeFromRun(nil, "ci", "downloads.example")
 	if info.rightLabel != "no builds" || info.leftLabel != "ci" {
 		t.Fatalf("badgeFromRun(nil) = %+v", info)
 	}

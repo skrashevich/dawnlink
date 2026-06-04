@@ -149,7 +149,7 @@ func analyticsTestServer(t *testing.T, cfg config.Config) *Server {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	bundle, err := i18n.Load("en")
+	bundle, err := i18n.Load("en", cfg.PrimaryDomain())
 	if err != nil {
 		t.Fatal(err)
 	}

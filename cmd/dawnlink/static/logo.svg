@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 32" fill="none" role="img" aria-label="dawnl.ink">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {{width}} 32" fill="none" role="img" aria-label="{{domain_name}}{{domain_suffix}}">
   <defs>
     <linearGradient id="sun-core" x1="5" y1="19" x2="21" y2="5" gradientUnits="userSpaceOnUse">
       <stop stop-color="#a86f24"/>
@@ -41,6 +41,6 @@
   </g>
 
   <text x="36" y="22.5" font-family="Sora, ui-sans-serif, system-ui, sans-serif" font-size="15.5" font-weight="600" letter-spacing="-0.04em">
-    <tspan fill="#e8eef6">dawnl</tspan><tspan fill="url(#ink-accent)">.ink</tspan>
+    <tspan fill="#e8eef6">{{domain_name}}</tspan><tspan fill="url(#ink-accent)">{{domain_suffix}}</tspan>
   </text>
 </svg>

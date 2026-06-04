@@ -6,17 +6,17 @@ import (
 )
 
 func TestUnknownLocaleFallsBackToEnglish(t *testing.T) {
-	bundle, err := Load("ru")
+	bundle, err := Load("ru", "downloads.example")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := bundle.T("unknown", "site_title"), "dawnl.ink for GitHub"; got != want {
+	if got, want := bundle.T("unknown", "site_title"), "downloads.example for GitHub"; got != want {
 		t.Fatalf("T() = %q, want %q", got, want)
 	}
 }
 
 func TestLanguagesAreStable(t *testing.T) {
-	bundle, err := Load("ru")
+	bundle, err := Load("ru", "downloads.example")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestLanguagesAreStable(t *testing.T) {
 }
 
 func TestLocaleFromRequestUsesEnglishFallbackAndRussianPreference(t *testing.T) {
-	bundle, err := Load("en")
+	bundle, err := Load("en", "downloads.example")
 	if err != nil {
 		t.Fatal(err)
 	}

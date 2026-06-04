@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"fmt"
+	"html"
 	"io/fs"
 	"log"
 	"net/http"
@@ -25,7 +27,7 @@ func main() {
 	if err := cfg.Validate(); err != nil {
 		log.Fatal(err)
 	}
-	bundle, err := i18n.Load(cfg.DefaultLocale)
+	bundle, err := i18n.Load(cfg.DefaultLocale, cfg.PrimaryDomain())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +58,7 @@ func main() {
 	srv := handlers.New(cfg, store, ghApp, eng, bundle)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/style.css", staticHandler("style.css", "text/css; charset=utf-8"))
-	mux.HandleFunc("/logo.svg", staticHandler("logo.svg", "image/svg+xml"))
+	mux.HandleFunc("/logo.svg", logoHandler(cfg.PrimaryDomain()))
 	mux.Handle("/", srv)
 
 	addr := ":" + cfg.Port
@@ -74,7 +76,28 @@ func main() {
 	}
 }
 
+func logoHandler(domain string) http.HandlerFunc {
+	name, suffix := domain, ""
+	if i := strings.LastIndex(domain, "."); i >= 0 {
+		name, suffix = domain[:i], domain[i:]
+	}
+	width := 48 + len([]rune(domain))*9
+	if width < 168 {
+		width = 168
+	}
+	replacements := map[string]string{
+		"{{width}}":         fmt.Sprint(width),
+		"{{domain_name}}":   html.EscapeString(name),
+		"{{domain_suffix}}": html.EscapeString(suffix),
+	}
+	return staticHandlerWithReplacements("logo.svg", "image/svg+xml", replacements)
+}
+
 func staticHandler(name, contentType string) http.HandlerFunc {
+	return staticHandlerWithReplacements(name, contentType, nil)
+}
+
+func staticHandlerWithReplacements(name, contentType string, replacements map[string]string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := fs.ReadFile(staticFS, "static/"+name)
 		if err != nil {
@@ -86,8 +109,12 @@ func staticHandler(name, contentType string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
+		content := string(data)
+		for placeholder, replacement := range replacements {
+			content = strings.ReplaceAll(content, placeholder, replacement)
+		}
 		w.Header().Set("Cache-Control", "max-age=8640000")
 		w.Header().Set("Content-Type", contentType)
-		_, _ = w.Write(data)
+		_, _ = w.Write([]byte(content))
 	}
 }
