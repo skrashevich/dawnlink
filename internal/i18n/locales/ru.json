@@ -25,7 +25,6 @@
   "section_run_desc": "Run — это набор jobs. Артефакты привязаны к родительскому run.",
   "section_bot": "Бот, комментирующий pull request'ы",
   "section_bot_desc": "Добавьте workflow-бота, который отвечает ссылками на артефакты после сборки PR.",
-  "donation_banner": "Подсказка: поддержите автора сервиса, если вы на нём полагаетесь.",
   "dashboard_title": "Панель управления",
   "dashboard_desc": "Репозитории, доступные через установку GitHub App:",
   "dashboard_search_label": "Фильтр репозиториев",

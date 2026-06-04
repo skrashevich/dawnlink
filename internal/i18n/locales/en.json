@@ -25,7 +25,6 @@
   "section_run_desc": "A run is a collection of jobs. Artifacts are associated with the parent run.",
   "section_bot": "Bot that comments on pull requests",
   "section_bot_desc": "Add a workflow bot that replies with artifact links when a PR finishes building.",
-  "donation_banner": "Tip: support the service maintainer if you rely on it.",
   "dashboard_title": "Dashboard",
   "dashboard_desc": "Repositories accessible through your GitHub App installation:",
   "dashboard_search_label": "Filter repositories",

@@ -23,7 +23,6 @@
       {{end}}
     </nav>
   </header>
-  {{if .Popup}}<p class="banner" role="status">{{tr .Tr "donation_banner"}}</p>{{end}}
   <main id="main">
     {{if eq .PageBlock "index_body"}}{{template "index_body" .}}{{end}}
     {{if eq .PageBlock "dashboard_body"}}{{template "dashboard_body" .}}{{end}}

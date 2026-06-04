@@ -23,7 +23,6 @@ type PageData struct {
 	Tr            map[string]string
 	Title         string
 	Canonical     string
-	Popup         bool
 	Messages      []string
 	Content       template.HTML
 	LanguageLinks []LanguageLink
