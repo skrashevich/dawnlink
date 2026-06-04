@@ -518,20 +518,69 @@ details.help-details .details-body p:last-child {
   word-break: break-all;
 }
 
-.example-code {
-  margin-top: 0.75rem;
-  padding: 0.75rem 0.9rem;
+.workflow-list .workflow-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.workflow-list .workflow-item__main {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  font-weight: 600;
+}
+
+.workflow-list .workflow-item__main:hover {
+  transform: none;
+  background: none;
+}
+
+.workflow-item__badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+
+.workflow-badge-img {
+  display: block;
+  height: 20px;
+  width: auto;
+}
+
+.workflow-badge-link {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.workflow-badge-link:hover {
+  color: var(--link-hover);
+}
+
+.workflow-badge-md {
+  margin: 0;
+  padding: 0.5rem 0.65rem;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow-x: auto;
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
-.example-code code {
+.workflow-badge-md code {
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.workflow-badge-hint {
+  margin-top: 0.75rem;
 }
 
 .example-arrow {

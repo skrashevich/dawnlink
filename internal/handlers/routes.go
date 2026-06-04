@@ -106,8 +106,6 @@ func (s *Server) renderIndex(w http.ResponseWriter, r *http.Request, messages []
 		"Messages":        messages,
 		"ExampleWorkflow": example.workflowURL,
 		"ExampleDest":     s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/%s", example.owner, example.repo, example.workflow, example.branch, example.artifact)),
-		"ExampleBadge":    s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/badge.svg", example.owner, example.repo, example.workflow, example.branch)),
-		"ExampleBadgeMD":  fmt.Sprintf("[![build](%s)](%s)", s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/badge.svg", example.owner, example.repo, example.workflow, example.branch)), s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s", example.owner, example.repo, example.workflow, example.branch))),
 		"ExampleArtifact": example.artifact,
 		"ReconfigureURL":  fmt.Sprintf("https://github.com/apps/%s/installations/new", s.cfg.GitHubAppName),
 		"AuthURL":         s.oauthURL(r),

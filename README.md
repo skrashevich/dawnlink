@@ -90,16 +90,7 @@ Workflow names without an extension automatically receive the `.yml` extension. 
 
 ### README badge
 
-Show the latest GitHub Actions run status and link to the dawnl.ink artifact page:
-
-```markdown
-[![build](https://dawnl.ink/owner/repo/workflows/ci/main/badge.svg)](https://dawnl.ink/owner/repo/workflows/ci/main)
-```
-
-Optional query parameters on the badge URL:
-
-- `label` — left side of the badge (default: `build`)
-- `h` — private repository secret (same as artifact URLs)
+Open `https://dawnl.ink/owner/repo` to see per-workflow badge URLs and ready-to-paste Markdown. Badge endpoint: `/owner/repo/workflows/{workflow}/{branch}/badge.svg` (optional `?label=` and `?h=` for private repos).
 
 ## Docker
 

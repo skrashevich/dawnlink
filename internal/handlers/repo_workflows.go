@@ -11,9 +11,12 @@ import (
 )
 
 type repoWorkflowLink struct {
-	Title string
-	URL   string
-	Path  string
+	Title          string
+	URL            string
+	Path           string
+	BadgeURL       string
+	BadgeTargetURL string
+	BadgeMarkdown  string
 }
 
 func (s *Server) repoWorkflows(w http.ResponseWriter, r *http.Request, owner, repo string) error {
@@ -58,14 +61,18 @@ func (s *Server) repoWorkflows(w http.ResponseWriter, r *http.Request, owner, re
 		}
 		u := s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s", owner, repo, pathComponent(short), pathComponent(branch)))
 		u = artifactURL(u+"?preview", h, "")
+		badgeURL, badgeTarget, badgeMD := workflowBadgeLinks(s, r, owner, repo, short, branch, h)
 		title := short
 		if wf.Name != "" && !strings.EqualFold(wf.Name, short) {
 			title = fmt.Sprintf("%s (%s)", wf.Name, short)
 		}
 		links = append(links, repoWorkflowLink{
-			Title: title,
-			URL:   u,
-			Path:  wf.Path,
+			Title:          title,
+			URL:            u,
+			Path:           wf.Path,
+			BadgeURL:       badgeURL,
+			BadgeTargetURL: badgeTarget,
+			BadgeMarkdown:  badgeMD,
 		})
 	}
 	sort.Slice(links, func(i, j int) bool {
@@ -86,6 +93,17 @@ func (s *Server) repoWorkflows(w http.ResponseWriter, r *http.Request, owner, re
 			"GitHubURL":    fmt.Sprintf("https://github.com/%s/%s", owner, repo),
 		},
 	})
+}
+
+func workflowBadgeLinks(s *Server, r *http.Request, owner, repo, workflow, branch, h string) (badgeURL, targetURL, markdown string) {
+	targetURL = s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s", owner, repo, pathComponent(workflow), pathComponent(branch)))
+	badgeURL = s.abs(r, fmt.Sprintf("/%s/%s/workflows/%s/%s/badge.svg", owner, repo, pathComponent(workflow), pathComponent(branch)))
+	if h != "" {
+		targetURL = artifactURL(targetURL, h, "")
+		badgeURL = artifactURL(badgeURL, h, "")
+	}
+	markdown = fmt.Sprintf("[![build](%s)](%s)", badgeURL, targetURL)
+	return badgeURL, targetURL, markdown
 }
 
 func workflowShortName(path string) string {
