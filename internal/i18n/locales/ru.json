@@ -1,11 +1,11 @@
 {
-  "site_title": "dawn.link для GitHub",
+  "site_title": "dawnl.ink для GitHub",
   "site_tagline": "Получите постоянную ссылку на скачивание артефакта сборки из последнего успешного запуска GitHub Actions.",
   "public_note": "Любой публичный репозиторий доступен по умолчанию, посетителям не нужно входить в GitHub.",
   "install_app": "Установить GitHub App",
   "authorize": "Авторизоваться",
   "optional_auth": "(необязательно, кроме приватных репозиториев; можно отозвать в любой момент)",
-  "paste_prompt": "Вставьте ссылку GitHub — получите dawn.link!",
+  "paste_prompt": "Вставьте ссылку GitHub — получите dawnl.ink!",
   "url_placeholder": "https://github.com/owner/repo/...",
   "get_link": "Получить ссылку",
   "lang_ru": "Русский",

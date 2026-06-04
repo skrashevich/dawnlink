@@ -10,7 +10,7 @@ func TestUnknownLocaleFallsBackToEnglish(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := bundle.T("unknown", "site_title"), "dawn.link for GitHub"; got != want {
+	if got, want := bundle.T("unknown", "site_title"), "dawnl.ink for GitHub"; got != want {
 		t.Fatalf("T() = %q, want %q", got, want)
 	}
 }

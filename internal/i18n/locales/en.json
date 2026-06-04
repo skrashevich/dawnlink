@@ -1,11 +1,11 @@
 {
-  "site_title": "dawn.link for GitHub",
+  "site_title": "dawnl.ink for GitHub",
   "site_tagline": "Get a shareable link to download a build artifact from the latest successful GitHub Actions build.",
   "public_note": "Any public repository is accessible by default and visitors don't need to log in.",
   "install_app": "Install GitHub App",
   "authorize": "Authorize",
   "optional_auth": "(optional, except for private repos; you can revoke anytime)",
-  "paste_prompt": "Paste a GitHub link, get a dawn.link!",
+  "paste_prompt": "Paste a GitHub link, get a dawnl.ink!",
   "url_placeholder": "https://github.com/owner/repo/...",
   "get_link": "Get link",
   "lang_ru": "Русский",
