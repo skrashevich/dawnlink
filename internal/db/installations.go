@@ -156,16 +156,18 @@ func (s *Store) VerifiedToken(repoOwner, repoName, h string) (github.Token, stri
 	}
 	if inst != nil {
 		_, err := s.Verify(inst, repoName, h)
-		if err != nil {
+		if err != nil && inst.PrivateRepos.Contains(repoName) {
 			return nil, "", err
 		}
-		tok, err := s.ghApp.InstallationToken(inst.InstallationID)
-		if err == nil && tok != nil {
-			pw := ""
-			if inst.PrivateRepos.Contains(repoName) {
-				pw = s.Password(inst, repoName)
+		if err == nil {
+			tok, err := s.ghApp.InstallationToken(inst.InstallationID)
+			if err == nil && tok != nil {
+				pw := ""
+				if inst.PrivateRepos.Contains(repoName) {
+					pw = s.Password(inst, repoName)
+				}
+				return tok, pw, nil
 			}
-			return tok, pw, nil
 		}
 	}
 	if s.fallback != 0 {
