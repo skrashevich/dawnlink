@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	modernc.org/sqlite v1.51.0
+	modernc.org/sqlite v1.52.0
 )
 
 require (
